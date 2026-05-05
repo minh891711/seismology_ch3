@@ -1,512 +1,282 @@
-# -*- coding: utf-8 -*-
-"""
-生成完整的互動式 HTML 網頁，包含 8 個摘要與 14 張圖片。
-輸出使用 utf-8-sig（帶 BOM），確保 Windows/瀏覽器正確顯示中文。
-"""
-import json
-
-RAW_BASE = "https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos"
-
-CHAPTERS = [
-    {
-        "id": "3.1",
-        "title": "3.1 緒論",
-        "subtitle": "Introduction",
-        "file": "summaries/15_3.1_Introduction_摘要.md",
-        "images": []
-    },
-    {
-        "id": "3.2",
-        "title": "3.2 折射法",
-        "subtitle": "Refraction Seismology",
-        "file": "summaries/16_3.2_Refraction_seismology_摘要.md",
-        "images": ["3.2-1.png", "3.2-4.png", "3.2-17.png"]
-    },
-    {
-        "id": "3.3",
-        "title": "3.3 反射法",
-        "subtitle": "Reflection Seismology",
-        "file": "summaries/17_3.3_Reflection_seismology_摘要.md",
-        "images": []
-    },
-    {
-        "id": "3.4",
-        "title": "3.4 球形地球",
-        "subtitle": "Seismic Waves in a Spherical Earth",
-        "file": "summaries/18_3.4_Seismic_waves_spherical_earth_摘要.md",
-        "images": ["3.4-5.png", "3.4-6.png", "3.4-7.png"]
-    },
-    {
-        "id": "3.5",
-        "title": "3.5 實體波走時",
-        "subtitle": "Body Wave Travel Time Studies",
-        "file": "summaries/19_3.5_Body_wave_travel_time_studies_摘要.md",
-        "images": ["3.5-1.png", "3.5-7.png"]
-    },
-    {
-        "id": "3.6",
-        "title": "3.6 各向異性",
-        "subtitle": "Anisotropic Earth Structure",
-        "file": "summaries/20_3.6_Anisotropic_earth_structure_摘要.md",
-        "images": ["3.6-1.png", "3.6-7.png"]
-    },
-    {
-        "id": "3.7",
-        "title": "3.7 衰減與非彈性",
-        "subtitle": "Attenuation and Anelasticity",
-        "file": "summaries/21_3.7_Attenuation_and_anelasticity_摘要.md",
-        "images": ["3.7-1.png", "3.7-5.png", "3.7-10.png", "3.7-18.png"]
-    },
-    {
-        "id": "3.8",
-        "title": "3.8 地函與地核",
-        "subtitle": "Composition of the Mantle and the Core",
-        "file": "summaries/22_3.8_Composition_of_mantle_and_core_摘要.md",
-        "images": []
-    },
-]
-
-
-def load_chapters():
-    result = []
-    for ch in CHAPTERS:
-        with open(ch["file"], "r", encoding="utf-8") as f:
-            content = f.read()
-        result.append({
-            "id": ch["id"],
-            "title": ch["title"],
-            "subtitle": ch["subtitle"],
-            "content": content,
-            "images": [f"{RAW_BASE}/{img}" for img in ch["images"]]
-        })
-    return result
-
-
-def build_html(data):
-    # 把所有資料序列化成 JSON（確保 ASCII=False，保留中文）
-    data_js = json.dumps(data, ensure_ascii=False, indent=2)
-
-    return """\
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>地震學 Ch.3｜地球內部結構與地震波</title>
-<meta name="description" content="地震學第三章互動式摘要導覽，涵蓋折射法、反射法、球形地球、衰減、各向異性等主題">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
-<style>
-/* ========================================
-   TOKENS
-======================================== */
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#07101f;
-  --bg2:#0d1829;
-  --sidebar:#0a1424;
-  --card:rgba(14,24,46,.85);
-  --border:rgba(255,255,255,.08);
-  --primary:#818cf8;
-  --primary-dk:#6366f1;
-  --primary-glow:rgba(99,102,241,.2);
-  --accent:#34d399;
-  --warn:#fbbf24;
-  --text:#e2e8f0;
-  --text-2:#94a3b8;
-  --text-3:#475569;
-  --radius:16px;
-  --sidebar-w:280px;
-  --transition:.28s cubic-bezier(.4,0,.2,1);
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地震學：地球內部結構與地震波</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts: Noto Sans TC & Roboto Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- MathJax -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --sidebar-bg: #181818;
+            --accent-color: #3782f2;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --border-color: #333;
+        }
 
-/* ========================================
-   RESET & BASE
-======================================== */
-html,body{height:100%;font-family:'Inter','Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow:hidden}
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.8;
+            scroll-behavior: smooth;
+        }
 
-/* ========================================
-   LAYOUT
-======================================== */
-.app{display:flex;height:100vh;overflow:hidden}
+        /* Sidebar Navigation */
+        #sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 2rem 0;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+        }
 
-/* ========================================
-   SIDEBAR
-======================================== */
-.sidebar{
-  width:var(--sidebar-w);
-  flex-shrink:0;
-  background:var(--sidebar);
-  border-right:1px solid var(--border);
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-}
-.sidebar-top{
-  padding:1.75rem 1.25rem 1rem;
-  border-bottom:1px solid var(--border);
-  flex-shrink:0;
-}
-.sidebar-logo{
-  font-size:.65rem;
-  font-weight:700;
-  letter-spacing:.18em;
-  text-transform:uppercase;
-  color:var(--primary);
-  margin-bottom:.6rem;
-}
-.sidebar-title{
-  font-size:1.1rem;
-  font-weight:700;
-  line-height:1.4;
-  color:var(--text);
-}
-.sidebar-sub{
-  font-size:.78rem;
-  color:var(--text-3);
-  margin-top:.25rem;
-}
-.nav-scroll{flex:1;overflow-y:auto;padding:.75rem .75rem 1.5rem}
-.nav-label{
-  font-size:.62rem;
-  font-weight:700;
-  letter-spacing:.15em;
-  text-transform:uppercase;
-  color:var(--text-3);
-  padding:.5rem .5rem .25rem;
-}
-.nav-item{
-  display:flex;
-  align-items:center;
-  gap:.65rem;
-  padding:.65rem .9rem;
-  border-radius:10px;
-  cursor:pointer;
-  color:var(--text-2);
-  font-size:.9rem;
-  transition:all var(--transition);
-  user-select:none;
-  margin-bottom:.15rem;
-}
-.nav-item:hover{background:rgba(255,255,255,.04);color:var(--text)}
-.nav-item.active{
-  background:linear-gradient(135deg,rgba(99,102,241,.22),rgba(139,92,246,.15));
-  color:#fff;
-  border:1px solid rgba(129,140,248,.25);
-}
-.nav-badge{
-  flex-shrink:0;
-  font-size:.72rem;
-  font-weight:700;
-  background:rgba(99,102,241,.18);
-  color:var(--primary);
-  padding:.1rem .45rem;
-  border-radius:6px;
-  min-width:2.1rem;
-  text-align:center;
-}
-.nav-item.active .nav-badge{background:var(--primary-dk);color:#fff}
-.nav-text{flex:1;line-height:1.3}
-.nav-text-en{display:block;font-size:.7rem;color:var(--text-3);margin-top:.1rem}
-.nav-item.active .nav-text-en{color:rgba(255,255,255,.45)}
-.img-badge{
-  font-size:.6rem;
-  background:rgba(52,211,153,.12);
-  color:var(--accent);
-  border:1px solid rgba(52,211,153,.25);
-  border-radius:4px;
-  padding:.05rem .35rem;
-  flex-shrink:0;
-}
+        .nav-link {
+            font-weight: 400;
+            color: var(--text-secondary);
+            padding: 8px 24px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
 
-/* ========================================
-   MAIN
-======================================== */
-.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;background:var(--bg)}
-.main-inner{
-  flex:1;
-  padding:2.5rem 3rem;
-  max-width:1060px;
-  margin:0 auto;
-  width:100%;
-}
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent-color);
+            background-color: rgba(55, 130, 242, 0.1);
+            border-right: 3px solid var(--accent-color);
+        }
 
-/* ========================================
-   CONTENT CARD
-======================================== */
-.content-card{
-  background:var(--card);
-  backdrop-filter:blur(18px);
-  -webkit-backdrop-filter:blur(18px);
-  border:1px solid var(--border);
-  border-radius:22px;
-  padding:3rem;
-  box-shadow:0 30px 80px rgba(0,0,0,.45);
-  opacity:0;
-  transform:translateY(14px);
-  transition:opacity var(--transition),transform var(--transition);
-  will-change:opacity,transform;
-}
-.content-card.show{opacity:1;transform:translateY(0)}
+        /* Content area */
+        main {
+            padding: 2rem;
+        }
 
-/* ========================================
-   MARKDOWN STYLES
-======================================== */
-.md h1{
-  font-size:1.85rem;
-  font-weight:700;
-  background:linear-gradient(130deg,#a5b4fc,#c084fc 60%);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-  background-clip:text;
-  padding-bottom:1rem;
-  margin-bottom:1.75rem;
-  border-bottom:1px solid var(--border);
-}
-.md h2{
-  font-size:1.2rem;
-  font-weight:600;
-  color:#93c5fd;
-  margin:2rem 0 .8rem;
-  padding-left:.9rem;
-  border-left:3px solid var(--primary-dk);
-}
-.md h3{
-  font-size:1.05rem;
-  font-weight:600;
-  color:#67e8f9;
-  margin:1.5rem 0 .6rem;
-}
-.md p{font-size:1rem;line-height:1.9;color:#cbd5e1;margin-bottom:1.1rem}
-.md ul,.md ol{margin:.4rem 0 1rem 1.6rem;color:#cbd5e1}
-.md li{margin-bottom:.45rem;line-height:1.75;font-size:.98rem}
-.md strong{color:#fde68a;font-weight:600}
-.md em{color:#a5f3fc;font-style:normal;font-weight:500}
-.md code{
-  background:rgba(99,102,241,.15);
-  border:1px solid rgba(99,102,241,.22);
-  padding:.13em .4em;border-radius:5px;
-  font-size:.9em;color:#c4b5fd;font-family:'Fira Code','Courier New',monospace
-}
-.md hr{border:none;border-top:1px solid var(--border);margin:1.75rem 0}
-.md blockquote{
-  border-left:3px solid var(--warn);
-  background:rgba(251,191,36,.06);
-  padding:.75rem 1.2rem;
-  margin:1rem 0 1.25rem;
-  border-radius:0 8px 8px 0;
-  color:#fde68a;
-}
+        .section-card {
+            background: var(--card-bg);
+            padding: 3rem;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 3rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
 
-/* ========================================
-   GALLERY
-======================================== */
-.gallery-heading{
-  display:flex;align-items:center;gap:.6rem;
-  font-size:.9rem;font-weight:600;color:var(--accent);
-  margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border);margin-bottom:1.25rem;
-}
-.gallery{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-  gap:1.25rem;
-}
-.gallery-card{
-  background:rgba(0,0,0,.3);
-  border:1px solid var(--border);
-  border-radius:14px;
-  overflow:hidden;
-  cursor:zoom-in;
-  transition:transform var(--transition),box-shadow var(--transition),border-color var(--transition);
-}
-.gallery-card:hover{
-  transform:translateY(-5px) scale(1.015);
-  box-shadow:0 20px 50px rgba(0,0,0,.55);
-  border-color:rgba(129,140,248,.35);
-}
-.gallery-card img{width:100%;display:block;aspect-ratio:4/3;object-fit:cover}
-.gallery-cap{padding:.55rem 1rem;font-size:.78rem;color:var(--text-3);text-align:center;background:rgba(0,0,0,.25)}
+        h1 { 
+            color: var(--accent-color); 
+            font-weight: 700; 
+            margin-top: 2rem;
+            margin-bottom: 1.5rem;
+            letter-spacing: 1px;
+        }
 
-/* ========================================
-   LIGHTBOX
-======================================== */
-#lb{
-  display:none;position:fixed;inset:0;z-index:9999;
-  background:rgba(0,0,0,.88);
-  backdrop-filter:blur(8px);
-  align-items:center;justify-content:center;
-}
-#lb.open{display:flex}
-#lb-img{
-  max-width:92%;max-height:92vh;
-  border-radius:14px;
-  box-shadow:0 30px 80px rgba(0,0,0,.8);
-  animation:lb-in .25s ease;
-}
-@keyframes lb-in{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
-#lb-close{
-  position:fixed;top:1.25rem;right:1.5rem;
-  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);
-  color:#fff;width:38px;height:38px;border-radius:50%;
-  font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
-  transition:background var(--transition);
-}
-#lb-close:hover{background:rgba(255,255,255,.22)}
+        h2 { 
+            color: #fff; 
+            font-size: 1.5rem; 
+            margin-top: 2.5rem; 
+            border-left: 4px solid var(--accent-color); 
+            padding-left: 1rem; 
+            margin-bottom: 1rem;
+        }
 
-/* ========================================
-   SCROLLBARS
-======================================== */
-::-webkit-scrollbar{width:5px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:#1e2d47;border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:#2d405e}
+        h3 { 
+            color: var(--text-primary); 
+            font-size: 1.2rem; 
+            margin-top: 1.5rem;
+            text-decoration: underline;
+            text-underline-offset: 8px;
+            text-decoration-color: var(--border-color);
+        }
 
-/* ========================================
-   RESPONSIVE
-======================================== */
-@media(max-width:780px){
-  html,body{overflow:auto}
-  .app{flex-direction:column;height:auto;overflow:auto}
-  .sidebar{width:100%;flex-shrink:0;overflow:visible}
-  .sidebar-top{padding:1.25rem}
-  .nav-scroll{overflow-x:auto;white-space:nowrap;padding:.5rem}
-  .nav-item{display:inline-flex;vertical-align:top;white-space:normal;width:140px;flex-direction:column;align-items:flex-start;gap:.3rem;padding:.65rem .75rem}
-  .nav-badge{align-self:flex-start}
-  .main{overflow:visible}
-  .main-inner{padding:1.25rem}
-  .content-card{padding:1.5rem}
-  .gallery{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
-}
-</style>
+        p, li { color: var(--text-secondary); font-weight: 300; }
+
+        .highlight-box {
+            background: rgba(55, 130, 242, 0.05);
+            border: 1px solid rgba(55, 130, 242, 0.3);
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 10px;
+        }
+
+        .formula-box {
+            background-color: #000;
+            color: #00ffcc; /* Sci-fi feel for math */
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-family: 'Roboto Mono', monospace;
+            border: 1px dashed #444;
+        }
+
+        .table {
+            color: var(--text-secondary);
+            border-color: var(--border-color);
+        }
+
+        .table-light { background-color: #2c2c2c; color: #fff; border-color: var(--border-color); }
+
+        footer {
+            padding: 4rem 0;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        hr { border-color: var(--border-color); opacity: 1; margin: 3rem 0; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
+
+        @media (max-width: 768px) {
+            #sidebar { display: none; }
+            main { padding: 1rem; }
+            .section-card { padding: 1.5rem; }
+        }
+    </style>
 </head>
-<body>
-<div class="app">
-<!-- ===== SIDEBAR ===== -->
-<div class="sidebar">
-  <div class="sidebar-top">
-    <div class="sidebar-logo">Seismology &bull; Chapter 3</div>
-    <div class="sidebar-title">地球內部結構<br>與地震波</div>
-    <div class="sidebar-sub">Earth's Internal Structure</div>
-  </div>
-  <div class="nav-scroll">
-    <div class="nav-label">章節導覽</div>
-    <div id="nav"></div>
-  </div>
-</div>
+<body data-bs-spy="scroll" data-bs-target="#sidebarMenu">
 
-<!-- ===== MAIN ===== -->
-<div class="main">
-  <div class="main-inner">
-    <div id="card" class="content-card">
-      <div id="mdv" class="md"></div>
-      <div id="gal"></div>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar Navigation -->
+        <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+            <div class="position-sticky pt-3" id="sidebarMenu">
+                <div class="px-4 mb-4">
+                    <h6 class="text-white fw-bold">地震學課程筆記</h6>
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item"><a class="nav-link" href="#sec3-1">3.1 緒論</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#sec3-2">3.2 地震折射法</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#sec3-3">3.3 地震反射法</a></li>
+                    <li class="nav-item ms-3"><a class="nav-link" href="#sec3-3-1">走時曲線</a></li>
+                    <li class="nav-item ms-3"><a class="nav-link" href="#sec3-3-3">CMP法</a></li>
+                    <li class="nav-item ms-3"><a class="nav-link" href="#sec3-3-6">地震剖面與偏移</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#sec3-4">3.4 球形地球</a></li>
+                    <li class="nav-item ms-3"><a class="nav-link" href="#sec3-4-1">射線路徑</a></li>
+                    <li class="nav-item ms-3"><a class="nav-link" href="#sec3-4-2">特徵走時曲線</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10">
+            
+            <header class="py-5">
+                <h1 class="display-3">地球內部結構與地震波</h1>
+                <p class="lead text-secondary">Chapter 3: Earth's Interior Structure and Seismic Waves</p>
+            </header>
+
+            <!-- 3.1 Introduction -->
+            <section id="sec3-1" class="section-card">
+                <h1>3.1 緒論 (Introduction)</h1>
+                <h2>概述</h2>
+                <p>本節為地震學第三章「地球內部結構與地震波」的導論，闡明地震學在探測地球內部結構上所扮演的核心角色。地震學的一項主要應用，即是透過地震波的走時資料，推導出地球內部地震波速度的分布情形。</p>
+
+                <h2>地震學的優越解析力</h2>
+                <p>相較於重力與磁力探測，地震學資料所提供的解析能力明顯更為優異。地震學觀測可以精確指出<strong>核幔邊界 (CMB)</strong> 的深度以及該界面處物理性質的劇烈變化。</p>
+
+                <h2>走時資料與反演問題</h2>
+                <div class="formula-box">
+                    走時 \( T = \int_{path} u(s) ds \)
+                </div>
+                <p>走時可表示為慢度（slowness）沿射線路徑的積分。反演問題（Inverse Problem）即是從地表觀測的走時和振幅反推深部速度結構。</p>
+            </section>
+
+            <!-- 3.2 Refraction Seismology -->
+            <section id="sec3-2" class="section-card">
+                <h1>3.2 地震折射法 (Refraction Seismology)</h1>
+                <h2>概述</h2>
+                <p>此技術利用折射波走時來反演速度結構，應用範圍從淺地表（鐵鎚震源）到地殼與上部地函（地震或炸藥震源）。</p>
+
+                <h3>3.2.1 平面層法</h3>
+                <p>在界面上，首波（Head Wave）以 \( v_1 \) 速度傳播，其走時曲線為直線：</p>
+                <div class="formula-box">
+                    \( T_H(x) = \frac{x}{v_1} + \tau_1 \)
+                </div>
+                
+                <h3>3.2.5 岩石組成推論</h3>
+                <p>上部大陸地殼平均組成近似<strong>花崗閃長岩</strong>，大洋上部地殼為<strong>輝長岩</strong>。莫荷面（Moho）通常被視為化學界面，下方為以橄欖石為主的<strong>橄欖岩</strong>。</p>
+            </section>
+
+            <!-- 3.3 Reflection Seismology -->
+            <section id="sec3-3" class="section-card">
+                <h1>3.3 地震反射法 (Reflection Seismology)</h1>
+                <div class="highlight-box">
+                    反射法是石油與天然氣探勘的核心技術。其資料在空間與時間上密集取樣，使得許多先進處理技術率先在此領域發展。
+                </div>
+
+                <h2 id="sec3-3-1">3.3.1 反射波走時曲線</h2>
+                <p>對於厚度 \( h_0 \)、速度 \( v_0 \) 的均勻單層，反射波走時為雙曲線：</p>
+                <div class="formula-box">
+                    \( T(x)^2 = \frac{x^2}{v_0^2} + t_0^2 \), 其中 \( t_0 = \frac{2h_0}{v_0} \)
+                </div>
+                <p><strong>正常時差（NMO）：</strong> 偏移距處走時與零偏移距走時之差。多層情況下，利用 <strong>Dix 方程式</strong>，可從連續層反射的均方根速度（RMS velocity）求出各層的區間速度。</p>
+
+                <h2>3.3.2 截距-慢度公式 (τ-p)</h2>
+                <p>走時曲線的等價表示：\( \tau(p) = T(p) - px(p) \)，表示走時曲線在 \( p \) 點切線的時間軸截距。此方法直接與射線參數關聯。</p>
+
+                <h2 id="sec3-3-3">3.3.3 共中點法 (CMP 法)</h2>
+                <p>現代反射探勘最重要的技術。多組不同震源—接收器對的反射共用同一反射點。透過 NMO 校正與疊加，可顯著增強信噪比。</p>
+
+                <h2>3.3.4-3.3.5 褶積模型與速度濾波</h2>
+                <p>地震記錄可視為<strong>震源子波</strong>與<strong>反射係數序列</strong>的褶積。傅立葉變換用於 <strong>f-k 域</strong> 速度濾波，分離不同視速度的波場成分。</p>
+
+                <h2 id="sec3-3-6">3.3.6-3.3.7 地震剖面與偏移</h2>
+                <p>疊加後的剖面縱軸為「走時」而非「真實深度」。<strong>偏移（Migration）</strong> 處理旨在消除空間假象（如向斜造成的領結狀假象、斷層繞射），將事件重新定位於真實位置。</p>
+                <div class="highlight-box">
+                    ⚠️ <strong>重要提醒：</strong> 地震剖面並非直接照片，而是波場的顯示。受速度模型精確度影響，剖面可能出現虛假結構。
+                </div>
+            </section>
+
+            <!-- 3.4 Spherical Earth -->
+            <section id="sec3-4" class="section-card">
+                <h1>3.4 球形地球中的地震波 (Spherical Earth)</h1>
+                <h2>概述</h2>
+                <p>當觀測距離超過數百公里時，必須考慮地球的球體幾何。將地球視為一系列同心球殼。</p>
+
+                <h2 id="sec3-4-1">3.4.1 射線路徑與走時</h2>
+                <p><strong>球形地球 Snell 定律：</strong></p>
+                <div class="formula-box">
+                    \( p = \frac{r \sin i}{v} = \text{constant} \)
+                </div>
+                <p>其中 \( r \) 為地心距離。射線在最深處「見底」（bottoming），此時 \( i = 90^\circ \)，因此 \( p = r_p / v_p \)。</p>
+
+                <h2 id="sec3-4-2">3.4.2 速度分布的特徵走時曲線</h2>
+                
+                <ul>
+                    <li><strong>速度緩慢增加：</strong> 走時曲線 \( T(\Delta) \) 向下凹。</li>
+                    <li><strong>速度快速增加（三重化 Triplication）：</strong> 同一距離有三條射線到達。交會處稱為<strong>焦散面（caustic）</strong>，振幅極大。常見於地函 410 km 與 660 km 相變帶。</li>
+                    <li><strong>低速帶（Shadow Zone）：</strong> 射線向下彎曲，導致特定距離範圍無幾何射線到達。例如核幔邊界產生的 <strong>P 波陰影帶</strong>。</li>
+                </ul>
+
+                <h2>3.4.3 走時曲線反演</h2>
+                <p>經典方法：<strong>Herglotz–Wiechert 積分</strong>。先從走時曲線求出 \( p(\Delta) \)，再透過積分公式解出各深度的速度。若存在低速帶，則需採用「地球剝離法」。</p>
+            </section>
+
+            <footer>
+                <p>&copy; 2026 Seismology Digital Archive | Powered by Gemini 3 Flash</p>
+                <p>Designed for academic use and deep-earth exploration.</p>
+            </footer>
+        </main>
     </div>
-  </div>
-</div>
 </div>
 
-<!-- ===== LIGHTBOX ===== -->
-<div id="lb">
-  <button id="lb-close" onclick="lbClose()">&#10005;</button>
-  <img id="lb-img" src="" alt="圖片放大">
-</div>
-
-<script>
-/* ============ DATA ============ */
-const DATA = """ + data_js + """;
-
-/* ============ DOM ============ */
-const nav = document.getElementById('nav');
-const mdv = document.getElementById('mdv');
-const gal = document.getElementById('gal');
-const card = document.getElementById('card');
-let current = null;
-
-/* ============ RENDER ============ */
-function show(id) {
-  const ch = DATA.find(c => c.id === id);
-  if (!ch || id === current) return;
-  current = id;
-
-  // update nav
-  document.querySelectorAll('.nav-item').forEach(el => {
-    el.classList.toggle('active', el.dataset.id === id);
-  });
-
-  // animate out
-  card.classList.remove('show');
-  setTimeout(() => {
-    // markdown
-    mdv.innerHTML = marked.parse(ch.content);
-
-    // gallery
-    gal.innerHTML = '';
-    if (ch.images && ch.images.length) {
-      const h = document.createElement('div');
-      h.className = 'gallery-heading';
-      h.innerHTML = '<span>&#128247;</span> 關鍵圖表 (' + ch.images.length + ' 張)';
-      gal.appendChild(h);
-
-      const g = document.createElement('div');
-      g.className = 'gallery';
-      ch.images.forEach(url => {
-        const name = url.split('/').pop();
-        const d = document.createElement('div');
-        d.className = 'gallery-card';
-        d.innerHTML = '<img src="' + url + '" alt="' + name + '" loading="lazy" onerror="this.parentElement.style.display=\'none\'"><div class="gallery-cap">Fig. ' + name + '</div>';
-        d.querySelector('img').addEventListener('click', () => lbOpen(url));
-        g.appendChild(d);
-      });
-      gal.appendChild(g);
-    }
-
-    // scroll & animate in
-    document.querySelector('.main').scrollTop = 0;
-    requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add('show')));
-  }, 220);
-}
-
-/* ============ BUILD NAV ============ */
-DATA.forEach(ch => {
-  const d = document.createElement('div');
-  d.className = 'nav-item';
-  d.dataset.id = ch.id;
-  const imgBadge = ch.images.length ? '<span class="img-badge">' + ch.images.length + ' 圖</span>' : '';
-  d.innerHTML =
-    '<span class="nav-badge">' + ch.id + '</span>' +
-    '<span class="nav-text">' + ch.title +
-      '<span class="nav-text-en">' + ch.subtitle + '</span>' +
-    '</span>' +
-    imgBadge;
-  d.addEventListener('click', () => show(ch.id));
-  nav.appendChild(d);
-});
-
-/* ============ LIGHTBOX ============ */
-function lbOpen(url) {
-  document.getElementById('lb-img').src = url;
-  document.getElementById('lb').classList.add('open');
-}
-function lbClose() {
-  document.getElementById('lb').classList.remove('open');
-}
-document.getElementById('lb').addEventListener('click', e => {
-  if (e.target.id === 'lb') lbClose();
-});
-document.addEventListener('keydown', e => { if (e.key === 'Escape') lbClose(); });
-
-/* ============ INIT ============ */
-if (DATA.length) show(DATA[0].id);
-</script>
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html>"""
-
-
-if __name__ == "__main__":
-    chapters = load_chapters()
-    html_content = build_html(chapters)
-    # 使用 utf-8-sig（帶 BOM）確保 Windows 與瀏覽器正確辨識 UTF-8 中文
-    with open("index.html", "w", encoding="utf-8-sig") as f:
-        f.write(html_content)
-    print("Done: index.html")
+</html>
