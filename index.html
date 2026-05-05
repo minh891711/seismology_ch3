@@ -31,7 +31,6 @@
             overflow-y: auto;
             padding: 20px;
             box-sizing: border-box;
-            z-index: 100;
         }
         .sidebar h2 {
             font-size: 1.2rem;
@@ -87,22 +86,20 @@
         .img-container {
             text-align: center;
             margin: 20px 0;
-            background-color: #f9f9f9;
+            background-color: #fff;
             padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #eee;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
         .img-container img {
             max-width: 100%;
             height: auto;
-            border-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 2px;
         }
         .img-caption {
-            display: block;
-            margin-top: 8px;
             font-size: 0.9rem;
             color: #666;
+            margin-top: 8px;
             font-style: italic;
         }
         /* Collapsible Section Styles */
@@ -125,14 +122,14 @@
             background-color: #d5dbdb;
         }
         .collapsible:after {
-            content: '\002B'; /* Plus sign */
+            content: '\002B';
             color: var(--primary-color);
             font-weight: bold;
             float: right;
             margin-left: 5px;
         }
         .active:after {
-            content: "\2212"; /* Minus sign */
+            content: "\2212";
         }
         .content {
             padding: 0 15px;
@@ -156,7 +153,6 @@
 </head>
 <body>
 
-    <!-- Sidebar Navigation -->
     <div class="sidebar">
         <h2>目錄導覽</h2>
         <a href="#intro">3.1 緒論 (Introduction)</a>
@@ -169,7 +165,6 @@
         <a href="#composition">3.8 地函與地核的組成</a>
     </div>
 
-    <!-- Main Content -->
     <div class="main-content">
         <h1>地震學 第三章：地球內部結構與地震波</h1>
         <p>本文件整合了地震學第三章各節的詳細摘要，涵蓋從緒論、折射/反射法、球形地球模型到地球物理組成分析的完整內容 <span class="cite">[cite: 1]</span>。</p>
@@ -179,7 +174,12 @@
         <button class="collapsible">概述與解析力</button>
         <div class="content">
             <p>本節為地震學第三章「地球內部結構與地震波」的導論，闡明地震學在探測地球內部結構上所扮演的核心角色 <span class="cite">[cite: 1]</span>。地震學的一項主要應用，即是透過地震波的走時（travel time）資料，推導出地球內部地震波速度的分布情形，進而約束地球內部的礦物學、化學與熱力狀態 <span class="cite">[cite: 1]</span>。</p>
-            <p>相較於其他地球物理方法（如重力與磁力探測），地震學資料所提供的解析能力明顯更為優異 <span class="cite">[cite: 1]</span>。地震學觀測可以精確指出核幔邊界（CMB）的深度以及該界面處物理性質的劇烈變化：固態地函同時傳遞 P 波與 S 波，但液態外核中 S 波無法傳遞，且 P 波速度急劇下降 <span class="cite">[cite: 1]</span>。</p>
+            <p>相較於其他地球物理方法（如重力與磁力探測），地震學資料所提供的解析能力明顯更為優異 <span class="cite">[cite: 1]</span>。重力與磁力數據雖可推斷地球深部存在一個高密度的液態核，但僅能給出密度與大小的粗略約束 <span class="cite">[cite: 1]</span>。相比之下，地震學觀測可以精確指出核幔邊界（CMB）的深度以及該界面處物理性質的劇烈變化 <span class="cite">[cite: 1]</span>。</p>
+        </div>
+
+        <button class="collapsible">走時資料、正演與反演問題</button>
+        <div class="content">
+            <p>研究地球內部結構的基礎數據是地震波的走時 <span class="cite">[cite: 1]</span>。其量測方式為：將接收器處的到達時間減去震源的發震時間 <span class="cite">[cite: 1]</span>。走時可數學表示為慢度（slowness）沿射線路徑的積分 <span class="cite">[cite: 1]</span>。若速度結構已知，則計算走時（正演問題）相對直接；反之，從地表觀測的反推深部速度結構（反演問題）則更為困難 <span class="cite">[cite: 1]</span>。</p>
         </div>
 
         <!-- Section 3.2 -->
@@ -189,145 +189,141 @@
             <p>本節介紹利用折射波走時來反演地球深部速度結構的方法——地震折射法 <span class="cite">[cite: 1]</span>。</p>
             
             <div class="img-container">
-                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.2-1.png" alt="折射法示意圖 1">
-                <span class="img-caption">圖 3.2-1：地震折射法基本射線路徑與走時曲線示意</span>
+                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.2-1.png" alt="地震折射法原理圖">
+                <div class="img-caption">圖 3.2-1：地震折射法基本觀念與射線路徑</div>
             </div>
 
-            <p>最簡單的情形為一層厚度 <span class="math">h<sub>0</sub></span>、速度 <span class="math">v<sub>0</sub></span> 的水平層覆蓋在速度更高的半空間（<span class="math">v<sub>1</sub></span>）之上 <span class="cite">[cite: 1]</span>。震源至接收器之間存在三種基本射線路徑：直達波走時為 <span class="math">T<sub>D</sub>(x) = x/v<sub>0</sub></span>；反射波走時為雙曲線形式；首波（head wave）在臨界角入射後沿界面以 <span class="math">v<sub>1</sub></span> 傳播 <span class="cite">[cite: 1]</span>。</p>
-            
+            <p>最簡單的情形為一層水平層覆蓋在速度更高的半空間之上 <span class="cite">[cite: 1]</span>。直達波走時為通過原點的直線；反射波為雙曲線；首波沿界面傳播，其走時為直線 <span class="cite">[cite: 1]</span>。</p>
+
             <div class="img-container">
-                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.2-4.png" alt="折射法示意圖 2">
-                <span class="img-caption">圖 3.2-4：多層介質中的折射波與交叉距離分析</span>
+                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.2-4.png" alt="多層模型走時曲線">
+                <div class="img-caption">圖 3.2-4：多層介質中的折射波與首波走時曲線</div>
             </div>
-
-            <p>此方法可推廣至多層模型：每一速度增加的界面產生一個首波。然而，低速層不會產生首波，可能導致深度估算錯誤 <span class="cite">[cite: 1]</span>。</p>
+            
+            <p>此方法可推廣至多層模型。然而，低速層不會產生首波，可能導致深度估算錯誤；若層太薄，首波可能永遠不是初至，形成「盲區」 <span class="cite">[cite: 1]</span>。</p>
         </div>
 
-        <button class="collapsible">地殼結構與分析</button>
+        <button class="collapsible">傾斜層法與地殼結構</button>
         <div class="content">
-            <p>折射法顯示大洋地殼厚約 7 km 且相對均勻，由沉績層、玄武岩層與地函組成。大陸地殼較厚且變化大 <span class="cite">[cite: 1]</span>。</p>
+            <p>當界面具有傾角時，需進行反向剖面量測。兩方向的視速度因傾角而不同，結合斜率與截距可解出傾角、臨界角及層厚 <span class="cite">[cite: 1]</span>。</p>
             
             <div class="img-container">
-                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.2-17.png" alt="折射法示意圖 3">
-                <span class="img-caption">圖 3.2-17：典型地殼速度結構剖面實例</span>
+                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.2-17.png" alt="地殼結構折射剖面">
+                <div class="img-caption">圖 3.2-17：利用折射法觀測得到的地殼厚度變化剖面</div>
             </div>
-            
-            <p>速度結構常結合實驗室岩石速度量測，推論地殼與地函的岩石組成。上部地函以橄欖石為主的橄欖岩最為普遍被接受 <span class="cite">[cite: 1]</span>。</p>
+
+            <p>折射法顯示大洋地殼厚約 7 km 且相對均勻。大陸地殼較厚且變化大，例如內華達山脈可達 35–40 km <span class="cite">[cite: 1]</span>。</p>
         </div>
 
         <!-- Section 3.3 -->
         <h2 id="reflection">3.3 地震反射法 (Reflection Seismology)</h2>
         <button class="collapsible">反射波走時與射線參數</button>
         <div class="content">
-            <p>對於厚度 <span class="math">h<sub>0</sub></span>、速度 <span class="math">v<sub>0</sub></span> 的均勻單層，反射波走時為雙曲線：<span class="math">T(x)&sup2; = x&sup2;/v<sub>0</sub>&sup2; + t<sub>0</sub>&sup2;</span> <span class="cite">[cite: 1]</span>。正常時差（NMO）用於提取速度資訊，利用 Dix 方程式可求出區間速度 <span class="cite">[cite: 1]</span>。</p>
+            <p>本節探討利用反射波走時推導地下速度結構的地震反射法，此為石油與天然氣探勘的核心技術 <span class="cite">[cite: 1]</span>。對於均勻單層，反射波走時為雙曲線。利用 Dix 方程式，可從連續層反射的均方根速度求出各層的區間速度 <span class="cite">[cite: 1]</span>。</p>
+            <p><strong>射線參數 (p)</strong>：在水平層狀介質中，定義為 <span class="math">p = (sin i)/v</span> <span class="cite">[cite: 1]</span>。在走時曲線圖中，曲線在任何一點的斜率 <span class="math">dT/dx</span> 就等於該射線的射線參數 <span class="math">p</span> <span class="cite">[cite: 1]</span>。</p>
         </div>
 
         <!-- Section 3.4 -->
         <h2 id="spherical">3.4 球形地球中的地震波</h2>
-        <button class="collapsible">球形 Snells 定律與射線特性</button>
+        <button class="collapsible">球形 Snell 定律與走時特徵</button>
         <div class="content">
-            <p>在球形地球中，Snell 定律修正為 <span class="math">p = r sin i / v</span> <span class="cite">[cite: 1]</span>。</p>
+            <p>本節將理論推廣至球形地球幾何。球形地球的 Snell 定律為 <span class="math">p = r sin i / v</span> <span class="cite">[cite: 1]</span>。射線參數 <span class="math">p</span> 沿整條射線路徑保持不變 <span class="cite">[cite: 1]</span>。</p>
 
             <div class="img-container">
-                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.4-5.png" alt="球形地球射線圖 1">
-                <span class="img-caption">圖 3.4-5：球形地球幾何下的地震波路徑傳遞</span>
+                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.4-5.png" alt="球形地球射線路徑">
+                <div class="img-caption">圖 3.4-5：球形幾何下的地震波傳播路徑</div>
             </div>
 
-            <p>不同的速度-深度分布產生特徵性的走時曲線：例如速度快速增加會導致「三重化（triplication）」現象 <span class="cite">[cite: 1]</span>。</p>
+            <p>不同的速度-深度分布產生特徵性的走時曲線。例如，穿越高速度梯度區的射線會導致同一距離有三條不同射線到達，稱為三重化（triplication） <span class="cite">[cite: 1]</span>。</p>
 
             <div class="img-container">
-                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.4-6.png" alt="球形地球射線圖 2">
-                <span class="img-caption">圖 3.4-6：速度梯度導致的走時曲線分支與焦散面</span>
+                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.4-6.png" alt="三重化走時曲線">
+                <div class="img-caption">圖 3.4-6：速度快速增加導致的走時三重化現象</div>
             </div>
-
-            <p>低速帶則會造成陰影帶，這在核幔邊界觀測中非常明顯 <span class="cite">[cite: 1]</span>。</p>
 
             <div class="img-container">
-                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.4-7.png" alt="球形地球射線圖 3">
-                <span class="img-caption">圖 3.4-7：低速層產生的射線陰影區示意圖</span>
+                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.4-7.png" alt="低速帶陰影區">
+                <div class="img-caption">圖 3.4-7：低速層產生的射線陰影帶 (Shadow Zone)</div>
             </div>
+
+            <p>速度隨深度降低會形成陰影帶（shadow zone），如地核造成的 P 波陰影帶 <span class="cite">[cite: 1]</span>。</p>
         </div>
 
         <!-- Section 3.5 -->
         <h2 id="bodywave">3.5 實體波走時研究</h2>
         <button class="collapsible">全球速度模型與震相</button>
         <div class="content">
-            <p>IASP91與AK135模型定義了地球的基本層狀結構。下部地函速度平緩增加至 2890 km 的核幔邊界 (CMB) <span class="cite">[cite: 1]</span>。</p>
+            <p>PREM 模型提供了地球內部的速度、密度與衰減資訊 <span class="cite">[cite: 1]</span>。下部地函速度平緩增加至 2890 km 的核幔邊界（CMB），此處 P 波速驟降、S 波速歸零 <span class="cite">[cite: 1]</span>。</p>
 
             <div class="img-container">
-                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.5-1.png" alt="地球速度模型">
-                <span class="img-caption">圖 3.5-1：地球內部 P 波與 S 波速度隨深度分布圖</span>
+                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.5-1.png" alt="全球地震波速度剖面">
+                <div class="img-caption">圖 3.5-1：地球內部各層 P 波與 S 波速度分布模型 (如 IASP91/PREM)</div>
             </div>
 
-            <p>複雜的震相（如 PKIKP, ScS）讓我們得以探測地核結構 <span class="cite">[cite: 1]</span>。</p>
+            <p>震相標記系統中，K 表示通過外核的 P 波，I 表示通過內核的 P 波 <span class="cite">[cite: 1]</span>。</p>
 
             <div class="img-container">
-                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.5-7.png" alt="震相示意圖">
-                <span class="img-caption">圖 3.5-7：通過地核與地函的各類實體波震相路徑</span>
+                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.5-7.png" alt="複雜震相路徑圖">
+                <div class="img-caption">圖 3.5-7：穿過地核與地函的各種複雜震相 (PKP, PcP, PKIKP 等) 路徑示意圖</div>
             </div>
         </div>
 
         <!-- Section 3.6 -->
         <h2 id="anisotropy">3.6 地球各向異性結構</h2>
-        <button class="collapsible">各向異性觀測</button>
+        <button class="collapsible">各向異性觀測與機制</button>
         <div class="content">
-            <p>各向異性使地震波速度隨方向而異，常見於上部地函與內核 <span class="cite">[cite: 1]</span>。</p>
+            <p>各向異性使地震波速度依傳播方向而異，常表現為剪切波分裂現象 <span class="cite">[cite: 1]</span>。</p>
 
             <div class="img-container">
-                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.6-1.png" alt="各向異性圖 1">
-                <span class="img-caption">圖 3.6-1：剪切波分裂 (Shear Wave Splitting) 物理原理</span>
+                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.6-1.png" alt="剪切波分裂">
+                <div class="img-caption">圖 3.6-1：剪切波進入各向異性介質發生的分裂現象 (SWS)</div>
             </div>
 
-            <p>大洋板塊擴張方向與橄欖石快軸排列有直接關聯 <span class="cite">[cite: 1]</span>。</p>
+            <p>大洋岩石圈顯示強烈的方位各向異性，橄欖石[100]快軸傾向於沿板塊擴張方向排列 <span class="cite">[cite: 1]</span>。</p>
 
             <div class="img-container">
-                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.6-7.png" alt="各向異性圖 2">
-                <span class="img-caption">圖 3.6-7：全球地函方位各向異性觀測分布</span>
+                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.6-7.png" alt="內核各向異性">
+                <div class="img-caption">圖 3.6-7：內核各向異性導致南北極方向波速較快的觀測資料</div>
             </div>
         </div>
 
         <!-- Section 3.7 -->
         <h2 id="attenuation">3.7 衰減與非彈性</h2>
-        <button class="collapsible">衰減機制與品質因子</button>
+        <button class="collapsible">能量衰減與品質因子</button>
         <div class="content">
-            <p>非彈性衰減將地震能量轉換為熱能。品質因子 Q 越小，衰減越強 <span class="cite">[cite: 1]</span>。</p>
+            <p>非彈性衰減將地震能量轉換為熱能，以品質因子 Q 描述，Q 越大代表衰減越弱 <span class="cite">[cite: 1]</span>。</p>
 
             <div class="img-container">
-                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.7-1.png" alt="衰減圖 1">
-                <span class="img-caption">圖 3.7-1：地震波振幅隨傳播距離衰減之實驗觀測</span>
+                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.7-1.png" alt="振幅隨距離衰減">
+                <div class="img-caption">圖 3.7-1：地震波振幅隨傳播距離增加而衰減的觀測</div>
             </div>
 
-            <p>幾何擴散與散射也是造成振幅減小的重要因素 <span class="cite">[cite: 1]</span>。</p>
+            <p>散射現象在月球地震紀錄中尤為明顯，因月表破碎但缺乏流體，能量能長久迴盪 <span class="cite">[cite: 1]</span>。</p>
 
             <div class="img-container">
-                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.7-5.png" alt="衰減圖 2">
-                <span class="img-caption">圖 3.7-5：月球與地球地震紀錄之衰減對比（散射效應）</span>
+                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.7-5.png" alt="散射與尾波">
+                <div class="img-caption">圖 3.7-5：介質不均勻導致的地震波散射與尾波 (Coda Waves)</div>
             </div>
 
-            <p>高頻波衰減速度通常快於低頻波 <span class="cite">[cite: 1]</span>。</p>
-
             <div class="img-container">
-                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.7-10.png" alt="衰減圖 3">
-                <span class="img-caption">圖 3.7-10：不同 Q 值對地震波形頻率成分的影響</span>
+                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.7-10.png" alt="Q值分布">
+                <div class="img-caption">圖 3.7-10：地球內部品質因子 Q 隨深度的變化曲線</div>
             </div>
 
-            <p>軟流圈是典型的低 Q 值區，對應強烈的能量吸收 <span class="cite">[cite: 1]</span>。</p>
-
             <div class="img-container">
-                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.7-18.png" alt="衰減圖 4">
-                <span class="img-caption">圖 3.7-18：地球內部 Q 值的深度剖面分布模型</span>
+                <img src="https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos/3.7-18.png" alt="衰減與溫度的關係">
+                <div class="img-caption">圖 3.7-18：低 Q 值區域(高衰減)與軟流圈熱狀態的對應關係</div>
             </div>
         </div>
 
         <!-- Section 3.8 -->
         <h2 id="composition">3.8 地函與地核的組成</h2>
-        <button class="collapsible">成分推論</button>
+        <button class="collapsible">組成推論與相變</button>
         <div class="content">
-            <p>利用 Adams–Williamson 方程推算密度。410 和 660 km 不連續面是礦物相變的主要標記 <span class="cite">[cite: 1]</span>。外核為含輕元素的液態鐵鎳合金 <span class="cite">[cite: 1]</span>。</p>
+            <p>利用 Adams–Williamson 方程，可從地震速度推算密度變化 <span class="cite">[cite: 1]</span>。地函主要由橄欖岩組成，410、520 與 660 km 的速度不連續面對應礦物相變 <span class="cite">[cite: 1]</span>。外核由液態鐵與約 10% 的輕元素組成 <span class="cite">[cite: 1]</span>。</p>
         </div>
     </div>
 
-    <!-- JavaScript for Collapsible Functionality -->
     <script>
         var coll = document.getElementsByClassName("collapsible");
         var i;
@@ -344,10 +340,15 @@
             });
         }
         
-        // Open critical sections by default
-        if(coll.length > 0) {
-            coll[0].click(); // 3.1
-            coll[1].click(); // 3.2
+        // 預設展開各節的第一個按鈕
+        window.onload = function() {
+            var sections = document.querySelectorAll('.main-content > h2');
+            sections.forEach(sec => {
+                var firstColl = sec.nextElementSibling;
+                if(firstColl && firstColl.classList.contains('collapsible')) {
+                    firstColl.click();
+                }
+            });
         }
     </script>
 </body>
