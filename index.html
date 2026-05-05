@@ -1,269 +1,229 @@
-<!DOCTYPE html>
+import os
+import re
+import json
+
+# GitHub raw URL 前綴轉換函式
+def to_raw(url):
+    return url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
+
+# 圖片連結
+IMAGE_URLS = {
+    "3.2": [
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.2-1.png",
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.2-4.png",
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.2-17.png"
+    ],
+    "3.4": [
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.4-5.png",
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.4-6.png",
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.4-7.png"
+    ],
+    "3.5": [
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.5-1.png",
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.5-7.png"
+    ],
+    "3.6": [
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.6-1.png",
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.6-7.png"
+    ],
+    "3.7": [
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.7-1.png",
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.7-5.png",
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.7-10.png",
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.7-18.png"
+    ]
+}
+
+def generate():
+    # 讀取完整摘要檔案
+    summary_path = "summaries/Seismology_Chapter3_Full_Summary.md"
+    if not os.path.exists(summary_path):
+        print(f"找不到檔案: {summary_path}")
+        return
+
+    with open(summary_path, "r", encoding="utf-8") as f:
+        full_content = f.read()
+
+    # 以橫線切割章節 (相容不同平台換行符)
+    sections = re.split(r'\n---\n+', full_content)
+    
+    chapters_data = []
+    for section in sections:
+        # 尋找章節標題，例如 # 3.1 緒論
+        match = re.search(r'# (3\.\d) (.*?) — 摘要', section)
+        if match:
+            ch_id = match.group(1)
+            ch_title = match.group(2)
+            
+            # 清理內容
+            content = section.strip()
+            
+            # 取得對應圖片並轉換為 raw 連結
+            images = [to_raw(url) for url in IMAGE_URLS.get(ch_id, [])]
+            
+            chapters_data.append({
+                "id": ch_id,
+                "title": f"{ch_id} {ch_title}",
+                "content": content,
+                "images": images
+            })
+
+    if not chapters_data:
+        print("警告：未成功解析任何章節，請檢查 Markdown 格式。")
+        return
+
+    # HTML 模板
+    template = """<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>地震學 第三章：地球內部結構與地震波 | 完整摘要集錦</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>地震學第三章互動筆記</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; scroll-behavior: smooth; }
-        .section-card { transition: transform 0.2s; }
-        .section-card:hover { transform: translateY(-2px); }
-        .sticky-sidebar { height: calc(100vh - 2rem); position: sticky; top: 1rem; }
-        details summary::-webkit-details-marker { display: none; }
-        .math-box { background: #f8fafc; border-left: 4px solid #3b82f6; padding: 1rem; margin: 1rem 0; border-radius: 0 0.5rem 0.5rem 0; }
+        :root {
+            --primary: #818cf8;
+            --bg: #0f172a;
+            --sidebar-bg: #0b1120;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --text: #f1f5f9;
+            --text-dim: #94a3b8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans TC', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar h1 {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            color: var(--primary);
+            padding: 0 1rem;
+        }
+
+        .nav-item {
+            padding: 0.8rem 1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .nav-item:hover { background: rgba(255, 255, 255, 0.05); color: var(--text); }
+        .nav-item.active { background: var(--primary); color: white; }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            background: radial-gradient(circle at top right, rgba(129, 140, 248, 0.1), transparent);
+        }
+
+        .content-card {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            padding: 2.5rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .md-viewer h1 { color: var(--primary); margin-bottom: 1.5rem; font-size: 1.8rem; }
+        .md-viewer h2 { color: #a5b4fc; margin-top: 2rem; margin-bottom: 0.8rem; font-size: 1.4rem; }
+        .md-viewer p { line-height: 1.7; margin-bottom: 1rem; color: #cbd5e1; }
+        .md-viewer li { margin-bottom: 0.4rem; color: #cbd5e1; }
+
+        .image-gallery {
+            margin-top: 2.5rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: grid;
+            gap: 2rem;
+        }
+
+        .img-item { text-align: center; }
+        .img-item img { max-width: 100%; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.4); }
+        .img-caption { margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-dim); }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
-
-    <div class="flex flex-col lg:flex-row min-h-screen">
-        
-        <!-- Sidebar Navigation -->
-        <nav class="lg:w-72 bg-slate-900 text-white p-6 sticky-sidebar hidden lg:block">
-            <h1 class="text-2xl font-bold mb-8 border-b border-slate-700 pb-4 text-blue-400">地震學 第三章</h1>
-            <ul class="space-y-4 text-sm">
-                <li><a href="#sec3-1" class="hover:text-blue-400 transition">3.1 緒論</a></li>
-                <li><a href="#sec3-2" class="hover:text-blue-400 transition">3.2 地震折射法</a></li>
-                <li><a href="#sec3-3" class="hover:text-blue-400 transition">3.3 地震反射法</a></li>
-                <li><a href="#sec3-4" class="hover:text-blue-400 transition">3.4 球形地球地震波</a></li>
-                <li><a href="#sec3-5" class="hover:text-blue-400 transition">3.5 實體波走時研究</a></li>
-                <li><a href="#sec3-6" class="hover:text-blue-400 transition">3.6 地球各向異性</a></li>
-                <li><a href="#sec3-7" class="hover:text-blue-400 transition">3.7 衰減與非彈性</a></li>
-                <li><a href="#sec3-8" class="hover:text-blue-400 transition">3.8 地函與地核組成</a></li>
-            </ul>
-            <div class="mt-12 pt-8 border-t border-slate-700 opacity-50 text-xs">
-                © 2026 Seismology Summary App
-            </div>
-        </nav>
-
-        <!-- Main Content -->
-        <main class="flex-1 p-4 lg:p-12 overflow-y-auto">
-            
-            <header class="mb-12">
-                <h1 class="text-4xl font-extrabold text-slate-900 mb-4 italic">地球內部結構與地震波</h1>
-                <p class="text-lg text-gray-600 max-w-3xl">本文件整合了地震學第三章各節的詳細摘要，涵蓋從緒論、折射/反射法、球形地球模型到地球物理組成分析的完整內容。</p>
-            </div>
-
-            <!-- Section 3.1 -->
-            <section id="sec3-1" class="mb-16 scroll-mt-10">
-                <div class="flex items-center mb-6">
-                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-bold mr-4">3.1</span>
-                    <h2 class="text-3xl font-bold text-slate-800">緒論 (Introduction)</h2>
-                </div>
-                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-                    <p class="mb-4">地震學是探測地球深部的「超音波」，透過地震波的<b>走時 (Travel Time)</b> 資料，我們能推導出地球內部的速度分布，進而理解其礦物組成與熱狀態。</p>
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <div class="bg-blue-50 p-4 rounded-lg">
-                            <h4 class="font-bold text-blue-800 mb-2"><i class="fas fa-microscope mr-2"></i>優越的解析力</h4>
-                            <p class="text-sm">相較於重力或磁力，地震波能精確標定<b>核幔邊界 (CMB)</b> 深度及物理性質變遷（如 S 波消失於外核）。</p>
-                        </div>
-                        <div class="bg-amber-50 p-4 rounded-lg">
-                            <h4 class="font-bold text-amber-800 mb-2"><i class="fas fa-exchange-alt mr-2"></i>正演與反演</h4>
-                            <p class="text-sm"><b>正演：</b>速度結構 → 計算走時。<br><b>反演：</b>觀測走時 → 推算結構（更具挑戰性）。</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Section 3.2 -->
-            <section id="sec3-2" class="mb-16 scroll-mt-10">
-                <div class="flex items-center mb-6">
-                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-bold mr-4">3.2</span>
-                    <h2 class="text-3xl font-bold text-slate-800">地震折射法 (Refraction Seismology)</h2>
-                </div>
-                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-                    <h3 class="text-xl font-bold mb-4 text-blue-700">關鍵機制：首波 (Head Wave)</h3>
-                    <p class="mb-6">當地震波以<b>臨界角</b>入射至速度較快的下層界面時，會沿著界面傳播並不斷向地表發射波。這就是地震折射法分析地殼厚度的核心。</p>
-                    
-                    <div class="border rounded-lg overflow-hidden mb-6">
-                        <div class="bg-gray-100 p-3 text-sm font-mono italic text-center">
-                            
-                        </div>
-                    </div>
-
-                    <div class="space-y-4">
-                        <details class="group bg-gray-50 p-4 rounded-lg">
-                            <summary class="font-bold cursor-pointer list-none flex justify-between">
-                                <span>平面層與傾斜層法分析</span>
-                                <span class="group-open:rotate-180 transition-transform">▼</span>
-                            </summary>
-                            <div class="mt-4 text-gray-700">
-                                <ul class="list-disc ml-6 space-y-2">
-                                    <li><b>交叉距離 (Crossover Distance)：</b>首波追過直達波成為初至的點。</li>
-                                    <li><b>盲區 (Blind Zone)：</b>層太薄或速度反轉導致首波無法觀測。</li>
-                                    <li><b>互易原理：</b>震源與接收器交換位置，走時不變。</li>
-                                </ul>
-                            </div>
-                        </details>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Section 3.3 -->
-            <section id="sec3-3" class="mb-16 scroll-mt-10">
-                <div class="flex items-center mb-6">
-                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-bold mr-4">3.3</span>
-                    <h2 class="text-3xl font-bold text-slate-800">地震反射法 (Reflection Seismology)</h2>
-                </div>
-                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-                    <p class="mb-6">主要用於石油勘探。利用反射波的<b>雙曲線走時特性</b>來反推地下結構。</p>
-
-                    <div class="math-box">
-                        <h4 class="font-bold mb-2">核心公式：射線參數 $p$</h4>
-                        <p>$$p = \frac{\sin i}{v}$$</p>
-                        <p class="text-sm mt-2 font-bold text-blue-700">物理意義：水平慢度 (Horizontal Slowness)。在水平層狀介質中沿路徑守恆。</p>
-                    </div>
-
-                    <div class="grid md:grid-cols-2 gap-4 mt-8">
-                        <div class="p-4 border rounded-lg">
-                            <h5 class="font-bold border-b pb-2 mb-2 italic">CMP 疊加技術</h5>
-                            <p class="text-sm text-gray-600">共中點法能大幅提高信噪比，是現代反射地震學的基石。</p>
-                        </div>
-                        <div class="p-4 border rounded-lg">
-                            <h5 class="font-bold border-b pb-2 mb-2 italic">偏移 (Migration)</h5>
-                            <p class="text-sm text-gray-600">處理傾斜界面與繞射點，將波場影像轉換為真實地質幾何。</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Section 3.4 & 3.5 Combined -->
-            <section id="sec3-4" class="mb-16 scroll-mt-10">
-                <div class="flex items-center mb-6">
-                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-bold mr-4">3.4-3.5</span>
-                    <h2 class="text-3xl font-bold text-slate-800">球形地球與全球速度模型</h2>
-                </div>
-                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-                    <div class="mb-6 border-l-4 border-amber-400 pl-4">
-                        <h3 class="text-xl font-bold">球形 Snell 定律：$p = \frac{r \sin i}{v}$</h3>
-                        <p class="text-sm">多出的 $r$ 因數反映了半徑方向隨路徑的偏轉。</p>
-                    </div>
-
-                    <div class="border rounded-lg overflow-hidden mb-6">
-                        <div class="bg-gray-100 p-3 text-sm font-mono italic text-center">
-                            
-                        </div>
-                    </div>
-
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-800 text-white">
-                                    <th class="p-3 border">深度 (km)</th>
-                                    <th class="p-3 border">區域名稱</th>
-                                    <th class="p-3 border">波速特徵</th>
-                                </tr>
-                            </thead>
-                            <tbody class="text-sm">
-                                <tr>
-                                    <td class="p-3 border">0 - 35</td>
-                                    <td class="p-3 border font-bold">地殼 (Crust)</td>
-                                    <td class="p-3 border">速度變化劇烈，區域差異大</td>
-                                </tr>
-                                <tr class="bg-gray-50">
-                                    <td class="p-3 border">410 - 660</td>
-                                    <td class="p-3 border font-bold">過渡帶</td>
-                                    <td class="p-3 border">發生三重化 (Triplication)，礦物相變點</td>
-                                </tr>
-                                <tr>
-                                    <td class="p-3 border">2890</td>
-                                    <td class="p-3 border font-bold text-red-600">CMB (核幔邊界)</td>
-                                    <td class="p-3 border text-red-600 font-bold">S 波消失，P 波速驟降 (液態外核)</td>
-                                </tr>
-                                <tr class="bg-gray-50">
-                                    <td class="p-3 border">5150</td>
-                                    <td class="p-3 border font-bold">內核邊界</td>
-                                    <td class="p-3 border">恢復固態，P 波速回升</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Section 3.6 -->
-            <section id="sec3-6" class="mb-16 scroll-mt-10">
-                <div class="flex items-center mb-6">
-                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-bold mr-4">3.6</span>
-                    <h2 class="text-3xl font-bold text-slate-800">各向異性 (Anisotropy)</h2>
-                </div>
-                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-                    <div class="grid md:grid-cols-2 gap-8">
-                        <div>
-                            <h4 class="font-bold text-lg mb-2 italic">成因分析</h4>
-                            <ul class="list-disc ml-6 space-y-2 text-gray-700">
-                                <li><b>LPO：</b>礦物晶格（如橄欖石）定向排列。</li>
-                                <li><b>SPO：</b>結構化（如薄層堆疊、裂隙）。</li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-lg mb-2 italic">剪切波分裂</h4>
-                            <p class="text-gray-700">如同光學的雙折射，S 波分裂為一快一慢的分量，是探測地函流動的主要工具。</p>
-                        </div>
-                    </div>
-                    <div class="mt-6 p-4 bg-purple-50 rounded-lg text-sm border border-purple-200">
-                        <b>重要發現：</b>大洋岩石圈的快軸通常平行於板塊擴張方向；內核南北極方向波速比赤道快 3%。
-                    </div>
-                </div>
-            </section>
-
-            <!-- Section 3.7 -->
-            <section id="sec3-7" class="mb-16 scroll-mt-10">
-                <div class="flex items-center mb-6">
-                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-bold mr-4">3.7</span>
-                    <h2 class="text-3xl font-bold text-slate-800">衰減與非彈性 (Attenuation)</h2>
-                </div>
-                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-                    <h3 class="font-bold text-xl mb-4">品質因子 $Q$</h3>
-                    <p class="mb-4">能量每週期損失的比率。$Q$ 越大，衰減越弱（如月球 $Q$ 極大）。</p>
-                    <div class="bg-gray-800 text-green-400 p-6 rounded-lg font-mono text-sm">
-                        # 衰減規律 <br>
-                        1. 高頻波衰減比低頻快。<br>
-                        2. 地球中 S 波衰減遠大於 P 波 (剪切能耗為主)。<br>
-                        3. 軟流圈 (Low Q) = 高溫、部分熔融區。
-                    </div>
-                </div>
-            </section>
-
-            <!-- Section 3.8 -->
-            <section id="sec3-8" class="mb-16 scroll-mt-10">
-                <div class="flex items-center mb-6">
-                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-bold mr-4">3.8</span>
-                    <h2 class="text-3xl font-bold text-slate-800">地函與地核的組成</h2>
-                </div>
-                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-                    <div class="grid md:grid-cols-3 gap-6">
-                        <div class="col-span-1 bg-slate-50 p-4 rounded-lg">
-                            <h4 class="font-bold mb-2">地函組成</h4>
-                            <p class="text-sm"><b>焰石模型 (Pyrolite)</b>：以橄欖石為主。410/660km 的間斷點對應固態相變。</p>
-                        </div>
-                        <div class="col-span-1 bg-slate-50 p-4 rounded-lg">
-                            <h4 class="font-bold mb-2">地核組成</h4>
-                            <p class="text-sm"><b>鐵鎳合金 + 輕元素</b>。輕元素釋出驅動「成分對流」，維持地磁場。</p>
-                        </div>
-                        <div class="col-span-1 bg-slate-50 p-4 rounded-lg">
-                            <h4 class="font-bold mb-2">壓力與密度</h4>
-                            <p class="text-sm">利用 <b>Adams–Williamson 方程</b> 推算。地心壓力達 364 GPa。</p>
-                        </div>
-                    </div>
-                    
-                    <div class="border rounded-lg overflow-hidden mt-8">
-                        <div class="bg-gray-100 p-3 text-sm font-mono italic text-center">
-                            
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-        </main>
+<body>
+    <div class="sidebar">
+        <h1>章節導覽</h1>
+        <div id="nav-list"></div>
+    </div>
+    <div class="main-content">
+        <div id="content-card" class="content-card">
+            <div id="md-viewer" class="md-viewer"></div>
+            <div id="image-gallery" class="image-gallery"></div>
+        </div>
     </div>
 
-    <!-- Floating Back to Top Button -->
-    <a href="#" class="fixed bottom-8 right-8 bg-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:bg-blue-700 transition">
-        <i class="fas fa-arrow-up"></i>
-    </a>
+    <script>
+        const chapters = """ + json.dumps(chapters_data, ensure_ascii=False) + """;
+        const navList = document.getElementById('nav-list');
+        const mdViewer = document.getElementById('md-viewer');
+        const imgGallery = document.getElementById('image-gallery');
 
+        function showChapter(id) {
+            const ch = chapters.find(c => c.id === id);
+            if (!ch) return;
+
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.id === id));
+            
+            mdViewer.innerHTML = marked.parse(ch.content);
+            imgGallery.innerHTML = '';
+            ch.images.forEach(url => {
+                const div = document.createElement('div');
+                div.className = 'img-item';
+                div.innerHTML = `<img src="${url}"><div class="img-caption">${url.split('/').pop()}</div>`;
+                imgGallery.appendChild(div);
+            });
+            document.querySelector('.main-content').scrollTop = 0;
+        }
+
+        chapters.forEach(ch => {
+            const div = document.createElement('div');
+            div.className = 'nav-item';
+            div.dataset.id = ch.id;
+            div.innerText = ch.title;
+            div.onclick = () => showChapter(ch.id);
+            navList.appendChild(div);
+        });
+
+        if (chapters.length > 0) showChapter(chapters[0].id);
+    </script>
 </body>
 </html>
+"""
+    # 使用 utf-8-sig (帶 BOM) 以確保 Windows 下瀏覽器正確識別為 UTF-8
+    with open("index.html", "w", encoding="utf-8-sig") as f:
+        f.write(template)
+    print("成功生成 index.html (UTF-8-SIG)")
+
+if __name__ == "__main__":
+    generate()
