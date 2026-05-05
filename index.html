@@ -3,292 +3,285 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>地震學：地球內部結構與地震波 | 數位摘要報告</title>
-    <!-- 引入 Google 字體與 Icon -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- MathJax 用於渲染 LaTeX 公式 -->
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    
+    <title>地震學第三章：地球內部結構與地震波</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --accent-color: #e67e22;
-            --bg-color: #f4f7f6;
-            --text-color: #333;
-            --card-bg: #ffffff;
-            --transition: all 0.3s ease;
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #e67e22;
+            --light: #ecf0f1;
+            --text: #333;
+            --sidebar-width: 280px;
         }
 
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            line-height: 1.8;
-            color: var(--text-color);
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 0;
-            scroll-behavior: smooth;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; line-height: 1.6; color: var(--text); background: #f9f9f9; display: flex; }
 
-        /* 導覽列 */
+        /* Sidebar Navigation */
         nav {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--primary);
+            color: white;
             position: fixed;
-            top: 0;
-            width: 100%;
-            background: rgba(44, 62, 80, 0.95);
-            color: white;
-            padding: 10px 0;
-            z-index: 1000;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            padding: 20px 0;
+            transition: 0.3s;
         }
-
-        .nav-container {
-            display: flex;
-            justify-content: space-around;
-            max-width: 1200px;
-            margin: 0 auto;
-            flex-wrap: wrap;
-        }
-
-        nav a {
-            color: white;
+        nav h1 { font-size: 1.2rem; padding: 0 20px 20px; border-bottom: 1px solid #444; color: var(--accent); }
+        nav ul { list-style: none; padding: 10px 0; }
+        nav li a {
+            padding: 12px 20px;
+            display: block;
+            color: #bdc3c7;
             text-decoration: none;
-            font-size: 0.9rem;
-            padding: 5px 10px;
-            border-radius: 4px;
-            transition: var(--transition);
+            font-size: 0.95rem;
+            transition: 0.2s;
         }
+        nav li a:hover, nav li a.active { background: var(--secondary); color: white; border-left: 4px solid var(--accent); }
 
-        nav a:hover {
-            background: var(--accent-color);
-        }
-
-        /* 標題區 */
-        header {
-            background: linear-gradient(135deg, #2c3e50 0%, #000000 100%);
-            color: white;
-            padding: 100px 20px 60px;
-            text-align: center;
-        }
-
-        header h1 { margin: 0; font-size: 2.5rem; letter-spacing: 2px; }
-        header p { opacity: 0.8; font-weight: 300; }
-
-        /* 主內容 */
-        .container {
-            max-width: 1000px;
-            margin: 30px auto;
-            padding: 0 20px;
-        }
-
-        /* 章節卡片樣式 */
-        section {
-            background: var(--card-bg);
-            border-radius: 12px;
+        /* Main Content */
+        main {
+            margin-left: var(--sidebar-width);
             padding: 40px;
-            margin-bottom: 40px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            border-left: 5px solid var(--primary-color);
-            transition: var(--transition);
+            width: 100%;
+            max-width: 1000px;
         }
 
-        section:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        .section-card {
+            background: white;
+            padding: 40px;
+            margin-bottom: 50px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--primary);
         }
 
-        h2 {
-            color: var(--primary-color);
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-            display: flex;
-            align-items: center;
-        }
-
-        h2 i { margin-right: 15px; color: var(--accent-color); }
-
-        h3 { color: #2980b9; margin-top: 25px; }
-
-        /* 互動式術語區塊 */
-        .term-box {
-            background: #fdf2e9;
-            border-radius: 8px;
+        h1, h2, h3 { color: var(--primary); margin-bottom: 1.5rem; }
+        h1 { font-size: 2.2rem; border-bottom: 2px solid var(--accent); display: inline-block; padding-bottom: 5px; }
+        h2 { font-size: 1.6rem; margin-top: 2rem; border-left: 5px solid var(--accent); padding-left: 15px; }
+        
+        .highlight-box {
+            background: #fff9f4;
+            border-left: 4px solid var(--accent);
             padding: 20px;
             margin: 20px 0;
-            border: 1px dashed var(--accent-color);
+            font-style: italic;
         }
 
-        .formula {
+        .diagram-placeholder {
             background: #eee;
-            padding: 15px;
-            border-radius: 5px;
+            border: 2px dashed #ccc;
+            padding: 20px;
             text-align: center;
-            overflow-x: auto;
-            margin: 15px 0;
+            margin: 20px 0;
+            border-radius: 8px;
+            color: #666;
         }
 
-        /* 列表樣式 */
-        ul { padding-left: 20px; }
-        li { margin-bottom: 8px; }
-
-        /* 頁腳 */
-        footer {
-            background: var(--primary-color);
-            color: white;
-            text-align: center;
-            padding: 40px 0;
-            margin-top: 60px;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
         }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th { background: var(--light); }
 
-        /* 響應式調整 */
+        /* Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            height: 5px;
+            background: #ddd;
+            z-index: 1000;
+        }
+        .progress-bar { height: 5px; background: var(--accent); width: 0%; }
+
         @media (max-width: 768px) {
-            header h1 { font-size: 1.8rem; }
-            section { padding: 25px; }
-            nav a { font-size: 0.75rem; }
+            nav { width: 0; display: none; }
+            main { margin-left: 0; padding: 20px; }
+            .progress-container { left: 0; width: 100%; }
         }
     </style>
 </head>
 <body>
 
+<div class="progress-container"><div class="progress-bar" id="myBar"></div></div>
+
 <nav>
-    <div class="nav-container">
-        <a href="#s31">3.1 緒論</a>
-        <a href="#s32">3.2 折射法</a>
-        <a href="#s33">3.3 反射法</a>
-        <a href="#s34">3.4 球形地球</a>
-        <a href="#s35">3.5 實體波</a>
-        <a href="#s36">3.6 各向異性</a>
-        <a href="#s37">3.7 衰減</a>
-        <a href="#s38">3.8 地球組成</a>
-    </div>
+    <h1><i class="fa-solid fa-earth-americas"></i> 地震學 CH3</h1>
+    <ul>
+        <li><a href="#sec3-1">3.1 緒論</a></li>
+        <li><a href="#sec3-2">3.2 地震折射法</a></li>
+        <li><a href="#sec3-3">3.3 地震反射法</a></li>
+        <li><a href="#sec3-4">3.4 球形地球地震波</a></li>
+        <li><a href="#sec3-5">3.5 實體波走時研究</a></li>
+        <li><a href="#sec3-6">3.6 地球各向異性</a></li>
+        <li><a href="#sec3-7">3.7 衰減與非彈性</a></li>
+        <li><a href="#sec3-8">3.8 地函與地核組成</a></li>
+    </ul>
 </nav>
 
-<header>
-    <h1>第三章：地球內部結構與地震波</h1>
-    <p>地震學研究摘要與核心概念回顧</p>
-</header>
-
-<div class="container">
-
-    <!-- 3.1 緒論 -->
-    <section id="s31">
-        <h2><i class="fas fa-compass"></i> 3.1 緒論 (Introduction)</h2>
-        <p>地震學是探測地球深部結構的最強大工具。透過觀測地震波的<strong>走時 (Travel Time)</strong>，我們能推導出波速分布，進而約束內部的化學與熱力狀態。</p>
-        <div class="term-box">
-            <strong>核心差異：</strong>
-            重力/磁力僅能給出粗略密度，但地震學能精確指出 <strong>核幔邊界 (CMB)</strong> 的深度及其物理性質的劇烈變化（例如 S 波在液態外核消失）。
+<main>
+    <!-- Section 3.1 -->
+    <section id="sec3-1" class="section-card">
+        <h1>3.1 緒論</h1>
+        <p>地震學的核心角色在於探測地球內部結構。透過觀測地震波的<strong>走時（travel time）</strong>，我們能推導出波速分布，進而約束地球的礦物學、化學與熱力狀態。</p>
+        
+        <div class="highlight-box">
+            地震學相較於重力或磁力探測，具備更精確的解析力，例如能精確指出<strong>核幔邊界 (CMB)</strong> 的深度及其物理性質的劇烈變化。
         </div>
+
+        <h3>走時與反演</h3>
+        <p>走時可表示為慢度（slowness）沿路徑的積分。反演問題（Inversion）則是從觀測資料推回內部結構，這是地震學最具挑戰性的部分。</p>
         
     </section>
 
-    <!-- 3.2 地震折射法 -->
-    <section id="s32">
-        <h2><i class="fas fa-wave-square"></i> 3.2 地震折射法 (Refraction Seismology)</h2>
-        <p>利用<strong>首波 (Head Wave)</strong> 探測深部速度。適用於地殼結構與 Moho 面的量測。</p>
-        <h3>關鍵概念：</h3>
+    <!-- Section 3.2 -->
+    <section id="sec3-2" class="section-card">
+        <h1>3.2 地震折射法</h1>
+        <h2>平面層法</h2>
+        <p>最簡單的模型是一層厚度 $h_0$、速度 $v_0$ 的水平層。基本路徑包含：</p>
         <ul>
-            <li><strong>平面層模型：</strong> 直達波為過原點直線，首波為斜率 $1/v_1$ 且具截距之直線。</li>
-            <li><strong>交叉距離 ($x_d$)：</strong> 超過此距離後，首波將取代直達波成為初至。</li>
-            <li><strong>盲區 (Blind Zone)：</strong> 若低速層存在或層太薄，可能導致無法從初至波判讀該層資訊。</li>
+            <li><strong>直達波 (Direct Wave):</strong> $T_D(x) = x/v_0$</li>
+            <li><strong>首波 (Head Wave):</strong> 在臨界角入射後沿界面傳播，$T_H(x) = x/v_1 + \tau_1$</li>
         </ul>
         
+
+        <h2>地殼結構觀測</h2>
+        <p>折射法揭示了大陸地殼與大洋地殼的顯著差異。例如，大洋地殼通常僅 7 公里厚，而大陸地殼（如內華達山脈）可達 40 公里。</p>
     </section>
 
-    <!-- 3.3 地震反射法 -->
-    <section id="s33">
-        <h2><i class="fas fa-project-diagram"></i> 3.3 地震反射法 (Reflection Seismology)</h2>
-        <p>石油探勘的核心技術。利用雙曲線形式的走時曲線推求地下構造。</p>
-        <div class="formula">
-            反射波走時公式：$T^2(x) = \frac{x^2}{v_0^2} + t_0^2$
-        </div>
-        <h3>核心技術：</h3>
-        <ul>
-            <li><strong>正常時差 (NMO)：</strong> 用於校正不同偏移距產生的時間延遲。</li>
-            <li><strong>Dix 方程式：</strong> 從均方根速度 (RMS) 計算各層區間速度。</li>
-            <li><strong>偏移 (Migration)：</strong> 消除向斜、斷層等幾何假象，將「時間剖面」轉換為「深度影像」。</li>
-        </ul>
+    <!-- Section 3.3 -->
+    <section id="sec3-3" class="section-card">
+        <h1>3.3 地震反射法</h1>
+        <p>此技術為油氣探勘的核心，重點在於利用反射波的雙曲線特性提取速度資訊。</p>
         
-        <div class="term-box" style="background: #e8f6f3; border-color: #1abc9c;">
-            <strong>重點：射線參數 ($p$)</strong><br>
-            在水平層介質中，$p = \frac{\sin i}{v}$ 為常數。它代表走時曲線的斜率 ($dT/dx$)，也稱為<strong>水平慢度</strong>。
+        <div class="highlight-box">
+            <strong>射線參數 (p):</strong> $p = \frac{\sin i}{v}$。在水平層狀介質中，一條射線的 $p$ 值在整條路徑上保持不變。
         </div>
+
+        <h3>核心技術：CMP 法</h3>
+        <p><strong>共中點疊加法 (CMP stacking)</strong> 透過增加訊號密度與 NMO 校正，能大幅提高地震剖面的解析度。最終透過「偏移處理 (Migration)」將波場影像轉換為地質影像。</p>
+        
     </section>
 
-    <!-- 3.4 球形地球 -->
-    <section id="s34">
-        <h2><i class="fas fa-globe-asia"></i> 3.4 球形地球 (Seismic Waves in a Spherical Earth)</h2>
-        <p>當地心距離遠時，必須考慮地球曲率。Snell 定律修正為：</p>
-        <div class="formula">
-            $p = \frac{r \sin i}{v} = \text{constant}$
-        </div>
-        <h3>特徵現象：</h3>
+    <!-- Section 3.4 -->
+    <section id="sec3-4" class="section-card">
+        <h1>3.4 球形地球中的地震波</h1>
+        <p>當觀測距離超過數百公里，必須考慮地球的球形幾何。此處 Snell 定律修正為：</p>
+        <p style="text-align:center; font-size: 1.2rem; margin: 20px;">$p = \frac{r \sin i}{v}$</p>
+
+        <h3>特徵現象</h3>
         <ul>
-            <li><strong>三重化 (Triplication)：</strong> 發生在相變不連續面（如 410km, 660km），導致同一距離有三組波到達。</li>
-            <li><strong>陰影帶 (Shadow Zone)：</strong> 因外核低速造成的 P 波觀測盲點 (98° - 145°)。</li>
+            <li><strong>三重化 (Triplication):</strong> 由 410km 或 660km 的波速急增引起。</li>
+            <li><strong>陰影帶 (Shadow Zone):</strong> 由地核的速度急降引起，導致 98°-145° 範圍內觀測不到直接 P 波。</li>
         </ul>
         
     </section>
 
-    <!-- 3.5 實體波走時研究 -->
-    <section id="s35">
-        <h2><i class="fas fa-list-ol"></i> 3.5 實體波走時研究 (Body Wave Studies)</h2>
-        <p>全球震相命名與分層模型（如 IASP91, AK135）。</p>
-        <ul>
-            <li><strong>地核震相：</strong> K (外核 P 波)、I (內核 P 波)、c (核面反射)。</li>
-            <li><strong>D″層：</strong> 核幔邊界上方的複雜帶，被視為熱邊界層與地函柱發源地。</li>
-        </ul>
+    <!-- Section 3.5 -->
+    <section id="sec3-5" class="section-card">
+        <h1>3.5 實體波走時研究</h1>
+        <p>全球性模型的發展歷程：從早期的 JB 模型到現代的 <strong>PREM</strong>、<strong>IASP91</strong> 模型。</p>
+        <table>
+            <tr><th>深度</th><th>界線 / 層次</th><th>特徵</th></tr>
+            <tr><td>35 km</td><td>莫荷面 (Moho)</td><td>地殼與地函分界</td></tr>
+            <tr><td>410/660 km</td><td>過渡帶不連續面</td><td>礦物相變引起三重化</td></tr>
+            <tr><td>2890 km</td><td>核幔邊界 (CMB)</td><td>S波消失，P波速驟降</td></tr>
+            <tr><td>5150 km</td><td>內核邊界 (ICB)</td><td>液態外核轉為固態內核</td></tr>
+        </table>
     </section>
 
-    <!-- 3.6 地球各向異性結構 -->
-    <section id="s36">
-        <h2><i class="fas fa-align-center"></i> 3.6 地球各向異性結構 (Anisotropy)</h2>
-        <p>描述波速隨方向而異的性質，主因是<strong>橄欖石的晶格優選方位 (LPO)</strong>。</p>
-        <div class="term-box">
-            <strong>剪切波分裂 (SKS Splitting)：</strong> S 波進入各向異性介質分裂為快/慢波，可用於推斷板塊運動與地函流動方向。
-        </div>
-    </section>
-
-    <!-- 3.7 衰減與非彈性 -->
-    <section id="s37">
-        <h2><i class="fas fa-chart-line"></i> 3.7 衰減與非彈性 (Attenuation)</h2>
-        <p>波在傳播中失去能量的機制。主要包含幾何擴散、散射與<strong>內在衰減</strong>。</p>
+    <!-- Section 3.6 -->
+    <section id="sec3-6" class="section-card">
+        <h1>3.6 地球各向異性結構</h1>
+        <p><strong>各向異性 (Anisotropy):</strong> 波速隨傳播方向不同。主要源於礦物的晶格優選方位 (LPO)。</p>
         <ul>
-            <li><strong>品質因子 $Q$：</strong> $Q$ 越小，衰減越強。</li>
-            <li><strong>軟流圈：</strong> 呈現低速、低 $Q$ 特徵，對應部分熔融狀態。</li>
-        </ul>
-    </section>
-
-    <!-- 3.8 地函與地核組成 -->
-    <section id="s38">
-        <h2><i class="fas fa-atom"></i> 3.8 地函與地核的組成 (Composition)</h2>
-        <p>綜合密度、壓力、溫度與高壓物理數據的最終推論。</p>
-        <ul>
-            <li><strong>地函：</strong> 主要由橄欖岩組成，660km 下方主要為<strong>鈣鈦礦</strong>結構。</li>
-            <li><strong>地核：</strong> 外核為液態鐵加約 10% 輕元素；內核為固態鐵鎳合金。</li>
+            <li><strong>上部地函:</strong> 橄欖石的 [100] 快軸通常與板塊擴張方向平行。</li>
+            <li><strong>內核:</strong> 南北極方向比赤道方向快約 3%。</li>
         </ul>
         
     </section>
 
-</div>
+    <!-- Section 3.7 -->
+    <section id="sec3-7" class="section-card">
+        <h1>3.7 衰減與非彈性</h1>
+        <p>地震能量轉化為熱能的過程稱為「內在衰減」，量化指標為<strong>品質因子 (Q)</strong>。</p>
+        <div class="highlight-box">
+            <strong>Q 與衰減:</strong> Q 越高代表衰減越弱。地球中剪切衰減 ($Q_\mu$) 遠大於體積衰減 ($Q_\kappa$)。
+        </div>
+        <p>軟流圈具有最低的 Q 值，反映了該區接近熔融溫度、強度較弱的特徵。</p>
+    </section>
 
-<footer>
-    <p>地震學第三章摘要報告 | © 2026 Geophysics Research</p>
-    <p style="font-size: 0.8rem; opacity: 0.7;">由 Gemini AI 輔助生成</p>
-</footer>
+    <!-- Section 3.8 -->
+    <section id="sec3-8" class="section-card">
+        <h1>3.8 地函與地核的組成</h1>
+        <h2>密度分布</h2>
+        <p>透過 <strong>Adams–Williamson 方程</strong> 推導出的 PREM 模型，展示了地球內部的密度隨深度躍增：</p>
+        <ul>
+            <li>CMB 處密度：$5.5 \to 9.9 \text{ g/cm}^3$</li>
+            <li>地心壓力：約 364 GPa</li>
+        </ul>
+
+        <h2>礦物相變</h2>
+        <p>地函主要由<strong>焰石 (Pyrolite)</strong> 組成。過渡帶的不連續面對應以下相變：</p>
+        <ul>
+            <li>410 km: 橄欖石 $\alpha$ 相 $\to$ $\beta$ 相（瓦茲利石）</li>
+            <li>660 km: $\gamma$ 相 $\to$ 鈣鈦礦 + 鎂方鐵礦</li>
+        </ul>
+        
+    </section>
+</main>
 
 <script>
-    // 簡單的卷動顯示效果
-    document.addEventListener('scroll', function() {
-        const sections = document.querySelectorAll('section');
-        sections.forEach(section => {
-            const rect = section.getBoundingClientRect();
-            if(rect.top < window.innerHeight * 0.8) {
-                section.style.opacity = '1';
+    // Progress Bar Logic
+    window.onscroll = function() {myFunction()};
+    function myFunction() {
+        var winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+        var height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        var scrolled = (winScroll / height) * 100;
+        document.getElementById("myBar").style.width = scrolled + "%";
+        
+        // Active Nav Logic
+        const sections = document.querySelectorAll("section");
+        const navLi = document.querySelectorAll("nav ul li a");
+        let current = "";
+        sections.forEach((section) => {
+            const sectionTop = section.offsetTop;
+            if (pageYOffset >= sectionTop - 100) {
+                current = section.getAttribute("id");
             }
+        });
+        navLi.forEach((a) => {
+            a.classList.remove("active");
+            if (a.getAttribute("href").includes(current)) {
+                a.classList.add("active");
+            }
+        });
+    }
+
+    // Smooth scroll
+    document.querySelectorAll('nav a').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
         });
     });
 </script>
+
+<!-- MathJax for LaTeX support -->
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
 </body>
 </html>
