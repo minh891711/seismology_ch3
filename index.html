@@ -1,346 +1,269 @@
-import os
-import re
-import json
-
-# GitHub raw URL 前綴轉換函式
-def to_raw(url):
-    return url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
-
-# 讀取 .env 取得圖片連結
-IMAGE_URLS = {
-    "3.2": [
-        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.2-1.png",
-        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.2-4.png",
-        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.2-17.png"
-    ],
-    "3.4": [
-        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.4-5.png",
-        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.4-6.png",
-        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.4-7.png"
-    ],
-    "3.5": [
-        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.5-1.png",
-        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.5-7.png"
-    ],
-    "3.6": [
-        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.6-1.png",
-        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.6-7.png"
-    ],
-    "3.7": [
-        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.7-1.png",
-        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.7-5.png",
-        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.7-10.png",
-        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.7-18.png"
-    ]
-}
-
-def generate():
-    # 讀取完整摘要檔案
-    summary_path = "summaries/Seismology_Chapter3_Full_Summary.md"
-    if not os.path.exists(summary_path):
-        print(f"Error: {summary_path} not found.")
-        return
-
-    with open(summary_path, "r", encoding="utf-8") as f:
-        full_content = f.read()
-
-    # 以橫線或大標題切割章節
-    sections = re.split(r'---\n+', full_content)
-    # 移除第一個前言（如果有）
-    if "整合了地震學第三章" in sections[0]:
-        sections = sections[1:]
-
-    chapters_data = []
-    for section in sections:
-        # 尋找章節標題，例如 # 3.1 緒論
-        match = re.search(r'# (3\.\d) (.*?) — 摘要', section)
-        if match:
-            ch_id = match.group(1)
-            ch_title = match.group(2)
-            
-            # 清理標題後的內容作為本文
-            content = section.strip()
-            
-            # 取得對應圖片並轉換為 raw 連結
-            images = [to_raw(url) for url in IMAGE_URLS.get(ch_id, [])]
-            
-            chapters_data.append({
-                "id": ch_id,
-                "title": f"{ch_id} {ch_title}",
-                "content": content,
-                "images": images
-            })
-
-    # HTML 模板 (Premium Design)
-    template = """<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>地震學第三章：地球內部結構與地震波 — 互動筆記</title>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
+    <title>地震學 第三章：地球內部結構與地震波 | 完整摘要集錦</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root {
-            --primary: #6366f1;
-            --primary-glow: rgba(99, 102, 241, 0.3);
-            --bg: #0f172a;
-            --sidebar-bg: #0b1120;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --text: #f1f5f9;
-            --text-dim: #94a3b8;
-            --accent: #10b981;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Outfit', 'Noto Sans TC', sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 320px;
-            background: var(--sidebar-bg);
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 2rem 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-            overflow-y: auto;
-        }
-
-        .sidebar h1 {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: 2rem;
-            background: linear-gradient(to right, #818cf8, #c084fc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            line-height: 1.4;
-        }
-
-        .nav-item {
-            padding: 1rem 1.2rem;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            color: var(--text-dim);
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            border: 1px solid transparent;
-        }
-
-        .nav-item:hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--text);
-        }
-
-        .nav-item.active {
-            background: rgba(99, 102, 241, 0.15);
-            color: #818cf8;
-            border-color: rgba(99, 102, 241, 0.3);
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.1);
-        }
-
-        /* Main */
-        .main-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 3rem;
-            background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent);
-            scroll-behavior: smooth;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .content-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            padding: 3.5rem;
-            border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.5s ease-out;
-        }
-
-        .content-card.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Markdown Styles */
-        .md-viewer h1 {
-            font-size: 2.2rem;
-            margin-bottom: 2rem;
-            color: #818cf8;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding-bottom: 1rem;
-        }
-
-        .md-viewer h2 {
-            font-size: 1.6rem;
-            margin-top: 2.5rem;
-            margin-bottom: 1rem;
-            color: #a5b4fc;
-        }
-
-        .md-viewer p {
-            line-height: 1.8;
-            margin-bottom: 1.2rem;
-            font-size: 1.1rem;
-            color: #cbd5e1;
-        }
-
-        .md-viewer ul, .md-viewer ol {
-            margin-left: 1.5rem;
-            margin-bottom: 1.5rem;
-            color: #cbd5e1;
-        }
-
-        .md-viewer li { margin-bottom: 0.6rem; }
-
-        /* Gallery */
-        .image-gallery {
-            margin-top: 3rem;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .img-item {
-            background: rgba(0, 0, 0, 0.2);
-            padding: 1rem;
-            border-radius: 16px;
-            text-align: center;
-        }
-
-        .img-item img {
-            max-width: 100%;
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transition: transform 0.3s ease;
-            cursor: pointer;
-        }
-
-        .img-item img:hover {
-            transform: scale(1.02);
-        }
-
-        .img-caption {
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            color: var(--text-dim);
-            font-style: italic;
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
-
-        @media (max-width: 900px) {
-            body { flex-direction: column; }
-            .sidebar { width: 100%; height: auto; flex-direction: row; overflow-x: auto; padding: 1rem; }
-            .sidebar h1 { display: none; }
-            .main-content { padding: 1.5rem; }
-            .content-card { padding: 2rem; }
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; scroll-behavior: smooth; }
+        .section-card { transition: transform 0.2s; }
+        .section-card:hover { transform: translateY(-2px); }
+        .sticky-sidebar { height: calc(100vh - 2rem); position: sticky; top: 1rem; }
+        details summary::-webkit-details-marker { display: none; }
+        .math-box { background: #f8fafc; border-left: 4px solid #3b82f6; padding: 1rem; margin: 1rem 0; border-radius: 0 0.5rem 0.5rem 0; }
     </style>
 </head>
-<body>
-    <div class="sidebar">
-        <h1>地震學 Ch.3<br>完整筆記導讀</h1>
-        <div id="nav-list"></div>
-    </div>
-    <div class="main-content">
-        <div class="container">
-            <div id="content-card" class="content-card">
-                <div id="md-viewer" class="md-viewer"></div>
-                <div id="image-gallery" class="image-gallery"></div>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="flex flex-col lg:flex-row min-h-screen">
+        
+        <!-- Sidebar Navigation -->
+        <nav class="lg:w-72 bg-slate-900 text-white p-6 sticky-sidebar hidden lg:block">
+            <h1 class="text-2xl font-bold mb-8 border-b border-slate-700 pb-4 text-blue-400">地震學 第三章</h1>
+            <ul class="space-y-4 text-sm">
+                <li><a href="#sec3-1" class="hover:text-blue-400 transition">3.1 緒論</a></li>
+                <li><a href="#sec3-2" class="hover:text-blue-400 transition">3.2 地震折射法</a></li>
+                <li><a href="#sec3-3" class="hover:text-blue-400 transition">3.3 地震反射法</a></li>
+                <li><a href="#sec3-4" class="hover:text-blue-400 transition">3.4 球形地球地震波</a></li>
+                <li><a href="#sec3-5" class="hover:text-blue-400 transition">3.5 實體波走時研究</a></li>
+                <li><a href="#sec3-6" class="hover:text-blue-400 transition">3.6 地球各向異性</a></li>
+                <li><a href="#sec3-7" class="hover:text-blue-400 transition">3.7 衰減與非彈性</a></li>
+                <li><a href="#sec3-8" class="hover:text-blue-400 transition">3.8 地函與地核組成</a></li>
+            </ul>
+            <div class="mt-12 pt-8 border-t border-slate-700 opacity-50 text-xs">
+                © 2026 Seismology Summary App
             </div>
-        </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 lg:p-12 overflow-y-auto">
+            
+            <header class="mb-12">
+                <h1 class="text-4xl font-extrabold text-slate-900 mb-4 italic">地球內部結構與地震波</h1>
+                <p class="text-lg text-gray-600 max-w-3xl">本文件整合了地震學第三章各節的詳細摘要，涵蓋從緒論、折射/反射法、球形地球模型到地球物理組成分析的完整內容。</p>
+            </div>
+
+            <!-- Section 3.1 -->
+            <section id="sec3-1" class="mb-16 scroll-mt-10">
+                <div class="flex items-center mb-6">
+                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-bold mr-4">3.1</span>
+                    <h2 class="text-3xl font-bold text-slate-800">緒論 (Introduction)</h2>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+                    <p class="mb-4">地震學是探測地球深部的「超音波」，透過地震波的<b>走時 (Travel Time)</b> 資料，我們能推導出地球內部的速度分布，進而理解其礦物組成與熱狀態。</p>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <h4 class="font-bold text-blue-800 mb-2"><i class="fas fa-microscope mr-2"></i>優越的解析力</h4>
+                            <p class="text-sm">相較於重力或磁力，地震波能精確標定<b>核幔邊界 (CMB)</b> 深度及物理性質變遷（如 S 波消失於外核）。</p>
+                        </div>
+                        <div class="bg-amber-50 p-4 rounded-lg">
+                            <h4 class="font-bold text-amber-800 mb-2"><i class="fas fa-exchange-alt mr-2"></i>正演與反演</h4>
+                            <p class="text-sm"><b>正演：</b>速度結構 → 計算走時。<br><b>反演：</b>觀測走時 → 推算結構（更具挑戰性）。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3.2 -->
+            <section id="sec3-2" class="mb-16 scroll-mt-10">
+                <div class="flex items-center mb-6">
+                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-bold mr-4">3.2</span>
+                    <h2 class="text-3xl font-bold text-slate-800">地震折射法 (Refraction Seismology)</h2>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-xl font-bold mb-4 text-blue-700">關鍵機制：首波 (Head Wave)</h3>
+                    <p class="mb-6">當地震波以<b>臨界角</b>入射至速度較快的下層界面時，會沿著界面傳播並不斷向地表發射波。這就是地震折射法分析地殼厚度的核心。</p>
+                    
+                    <div class="border rounded-lg overflow-hidden mb-6">
+                        <div class="bg-gray-100 p-3 text-sm font-mono italic text-center">
+                            
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <details class="group bg-gray-50 p-4 rounded-lg">
+                            <summary class="font-bold cursor-pointer list-none flex justify-between">
+                                <span>平面層與傾斜層法分析</span>
+                                <span class="group-open:rotate-180 transition-transform">▼</span>
+                            </summary>
+                            <div class="mt-4 text-gray-700">
+                                <ul class="list-disc ml-6 space-y-2">
+                                    <li><b>交叉距離 (Crossover Distance)：</b>首波追過直達波成為初至的點。</li>
+                                    <li><b>盲區 (Blind Zone)：</b>層太薄或速度反轉導致首波無法觀測。</li>
+                                    <li><b>互易原理：</b>震源與接收器交換位置，走時不變。</li>
+                                </ul>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3.3 -->
+            <section id="sec3-3" class="mb-16 scroll-mt-10">
+                <div class="flex items-center mb-6">
+                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-bold mr-4">3.3</span>
+                    <h2 class="text-3xl font-bold text-slate-800">地震反射法 (Reflection Seismology)</h2>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+                    <p class="mb-6">主要用於石油勘探。利用反射波的<b>雙曲線走時特性</b>來反推地下結構。</p>
+
+                    <div class="math-box">
+                        <h4 class="font-bold mb-2">核心公式：射線參數 $p$</h4>
+                        <p>$$p = \frac{\sin i}{v}$$</p>
+                        <p class="text-sm mt-2 font-bold text-blue-700">物理意義：水平慢度 (Horizontal Slowness)。在水平層狀介質中沿路徑守恆。</p>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-4 mt-8">
+                        <div class="p-4 border rounded-lg">
+                            <h5 class="font-bold border-b pb-2 mb-2 italic">CMP 疊加技術</h5>
+                            <p class="text-sm text-gray-600">共中點法能大幅提高信噪比，是現代反射地震學的基石。</p>
+                        </div>
+                        <div class="p-4 border rounded-lg">
+                            <h5 class="font-bold border-b pb-2 mb-2 italic">偏移 (Migration)</h5>
+                            <p class="text-sm text-gray-600">處理傾斜界面與繞射點，將波場影像轉換為真實地質幾何。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3.4 & 3.5 Combined -->
+            <section id="sec3-4" class="mb-16 scroll-mt-10">
+                <div class="flex items-center mb-6">
+                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-bold mr-4">3.4-3.5</span>
+                    <h2 class="text-3xl font-bold text-slate-800">球形地球與全球速度模型</h2>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+                    <div class="mb-6 border-l-4 border-amber-400 pl-4">
+                        <h3 class="text-xl font-bold">球形 Snell 定律：$p = \frac{r \sin i}{v}$</h3>
+                        <p class="text-sm">多出的 $r$ 因數反映了半徑方向隨路徑的偏轉。</p>
+                    </div>
+
+                    <div class="border rounded-lg overflow-hidden mb-6">
+                        <div class="bg-gray-100 p-3 text-sm font-mono italic text-center">
+                            
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-800 text-white">
+                                    <th class="p-3 border">深度 (km)</th>
+                                    <th class="p-3 border">區域名稱</th>
+                                    <th class="p-3 border">波速特徵</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm">
+                                <tr>
+                                    <td class="p-3 border">0 - 35</td>
+                                    <td class="p-3 border font-bold">地殼 (Crust)</td>
+                                    <td class="p-3 border">速度變化劇烈，區域差異大</td>
+                                </tr>
+                                <tr class="bg-gray-50">
+                                    <td class="p-3 border">410 - 660</td>
+                                    <td class="p-3 border font-bold">過渡帶</td>
+                                    <td class="p-3 border">發生三重化 (Triplication)，礦物相變點</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 border">2890</td>
+                                    <td class="p-3 border font-bold text-red-600">CMB (核幔邊界)</td>
+                                    <td class="p-3 border text-red-600 font-bold">S 波消失，P 波速驟降 (液態外核)</td>
+                                </tr>
+                                <tr class="bg-gray-50">
+                                    <td class="p-3 border">5150</td>
+                                    <td class="p-3 border font-bold">內核邊界</td>
+                                    <td class="p-3 border">恢復固態，P 波速回升</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3.6 -->
+            <section id="sec3-6" class="mb-16 scroll-mt-10">
+                <div class="flex items-center mb-6">
+                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-bold mr-4">3.6</span>
+                    <h2 class="text-3xl font-bold text-slate-800">各向異性 (Anisotropy)</h2>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="font-bold text-lg mb-2 italic">成因分析</h4>
+                            <ul class="list-disc ml-6 space-y-2 text-gray-700">
+                                <li><b>LPO：</b>礦物晶格（如橄欖石）定向排列。</li>
+                                <li><b>SPO：</b>結構化（如薄層堆疊、裂隙）。</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg mb-2 italic">剪切波分裂</h4>
+                            <p class="text-gray-700">如同光學的雙折射，S 波分裂為一快一慢的分量，是探測地函流動的主要工具。</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 p-4 bg-purple-50 rounded-lg text-sm border border-purple-200">
+                        <b>重要發現：</b>大洋岩石圈的快軸通常平行於板塊擴張方向；內核南北極方向波速比赤道快 3%。
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3.7 -->
+            <section id="sec3-7" class="mb-16 scroll-mt-10">
+                <div class="flex items-center mb-6">
+                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-bold mr-4">3.7</span>
+                    <h2 class="text-3xl font-bold text-slate-800">衰減與非彈性 (Attenuation)</h2>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-xl mb-4">品質因子 $Q$</h3>
+                    <p class="mb-4">能量每週期損失的比率。$Q$ 越大，衰減越弱（如月球 $Q$ 極大）。</p>
+                    <div class="bg-gray-800 text-green-400 p-6 rounded-lg font-mono text-sm">
+                        # 衰減規律 <br>
+                        1. 高頻波衰減比低頻快。<br>
+                        2. 地球中 S 波衰減遠大於 P 波 (剪切能耗為主)。<br>
+                        3. 軟流圈 (Low Q) = 高溫、部分熔融區。
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3.8 -->
+            <section id="sec3-8" class="mb-16 scroll-mt-10">
+                <div class="flex items-center mb-6">
+                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-bold mr-4">3.8</span>
+                    <h2 class="text-3xl font-bold text-slate-800">地函與地核的組成</h2>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+                    <div class="grid md:grid-cols-3 gap-6">
+                        <div class="col-span-1 bg-slate-50 p-4 rounded-lg">
+                            <h4 class="font-bold mb-2">地函組成</h4>
+                            <p class="text-sm"><b>焰石模型 (Pyrolite)</b>：以橄欖石為主。410/660km 的間斷點對應固態相變。</p>
+                        </div>
+                        <div class="col-span-1 bg-slate-50 p-4 rounded-lg">
+                            <h4 class="font-bold mb-2">地核組成</h4>
+                            <p class="text-sm"><b>鐵鎳合金 + 輕元素</b>。輕元素釋出驅動「成分對流」，維持地磁場。</p>
+                        </div>
+                        <div class="col-span-1 bg-slate-50 p-4 rounded-lg">
+                            <h4 class="font-bold mb-2">壓力與密度</h4>
+                            <p class="text-sm">利用 <b>Adams–Williamson 方程</b> 推算。地心壓力達 364 GPa。</p>
+                        </div>
+                    </div>
+                    
+                    <div class="border rounded-lg overflow-hidden mt-8">
+                        <div class="bg-gray-100 p-3 text-sm font-mono italic text-center">
+                            
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
     </div>
 
-    <script>
-        const chapters = """ + json.dumps(chapters_data, ensure_ascii=False) + """;
-        const navList = document.getElementById('nav-list');
-        const mdViewer = document.getElementById('md-viewer');
-        const imgGallery = document.getElementById('image-gallery');
-        const contentCard = document.getElementById('content-card');
+    <!-- Floating Back to Top Button -->
+    <a href="#" class="fixed bottom-8 right-8 bg-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:bg-blue-700 transition">
+        <i class="fas fa-arrow-up"></i>
+    </a>
 
-        function loadChapter(id) {
-            const ch = chapters.find(c => c.id === id);
-            if (!ch) return;
-
-            // Update UI
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.toggle('active', item.dataset.id === id);
-            });
-
-            // Transition
-            contentCard.classList.remove('active');
-            
-            setTimeout(() => {
-                // Render Markdown
-                mdViewer.innerHTML = marked.parse(ch.content);
-
-                // Render Images
-                imgGallery.innerHTML = '';
-                if (ch.images.length > 0) {
-                    ch.images.forEach(url => {
-                        const div = document.createElement('div');
-                        div.className = 'img-item';
-                        div.innerHTML = `
-                            <img src="${url}" alt="Figure" onclick="window.open('${url}', '_blank')">
-                            <div class="img-caption">圖表：${url.split('/').pop()}</div>
-                        `;
-                        imgGallery.appendChild(div);
-                    });
-                    imgGallery.style.display = 'flex';
-                } else {
-                    imgGallery.style.display = 'none';
-                }
-
-                contentCard.classList.add('active');
-                document.querySelector('.main-content').scrollTop = 0;
-            }, 300);
-        }
-
-        // Initialize Nav
-        chapters.forEach(ch => {
-            const div = document.createElement('div');
-            div.className = 'nav-item';
-            div.dataset.id = ch.id;
-            div.innerHTML = `<span>●</span> ${ch.title}`;
-            div.onclick = () => loadChapter(ch.id);
-            navList.appendChild(div);
-        });
-
-        // Load First Chapter
-        if (chapters.length > 0) loadChapter(chapters[0].id);
-    </script>
 </body>
 </html>
-"""
-    with open("index.html", "w", encoding="utf-8") as f:
-        f.write(template)
-    print("index.html (完整互動版) 生成成功！")
-
-if __name__ == "__main__":
-    generate()
