@@ -1,270 +1,346 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
+import os
+import re
+import json
+
+# GitHub raw URL 前綴轉換函式
+def to_raw(url):
+    return url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
+
+# 讀取 .env 取得圖片連結
+IMAGE_URLS = {
+    "3.2": [
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.2-1.png",
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.2-4.png",
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.2-17.png"
+    ],
+    "3.4": [
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.4-5.png",
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.4-6.png",
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.4-7.png"
+    ],
+    "3.5": [
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.5-1.png",
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.5-7.png"
+    ],
+    "3.6": [
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.6-1.png",
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.6-7.png"
+    ],
+    "3.7": [
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.7-1.png",
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.7-5.png",
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.7-10.png",
+        "https://github.com/minh891711/seismology_ch3/blob/main/photos/3.7-18.png"
+    ]
+}
+
+def generate():
+    # 讀取完整摘要檔案
+    summary_path = "summaries/Seismology_Chapter3_Full_Summary.md"
+    if not os.path.exists(summary_path):
+        print(f"Error: {summary_path} not found.")
+        return
+
+    with open(summary_path, "r", encoding="utf-8") as f:
+        full_content = f.read()
+
+    # 以橫線或大標題切割章節
+    sections = re.split(r'---\n+', full_content)
+    # 移除第一個前言（如果有）
+    if "整合了地震學第三章" in sections[0]:
+        sections = sections[1:]
+
+    chapters_data = []
+    for section in sections:
+        # 尋找章節標題，例如 # 3.1 緒論
+        match = re.search(r'# (3\.\d) (.*?) — 摘要', section)
+        if match:
+            ch_id = match.group(1)
+            ch_title = match.group(2)
+            
+            # 清理標題後的內容作為本文
+            content = section.strip()
+            
+            # 取得對應圖片並轉換為 raw 連結
+            images = [to_raw(url) for url in IMAGE_URLS.get(ch_id, [])]
+            
+            chapters_data.append({
+                "id": ch_id,
+                "title": f"{ch_id} {ch_title}",
+                "content": content,
+                "images": images
+            })
+
+    # HTML 模板 (Premium Design)
+    template = """<!DOCTYPE html>
+<html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>地震學 第三章 互動學習</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地震學第三章：地球內部結構與地震波 — 互動筆記</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.3);
+            --bg: #0f172a;
+            --sidebar-bg: #0b1120;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text: #f1f5f9;
+            --text-dim: #94a3b8;
+            --accent: #10b981;
+        }
 
-<style>
-body {
-    margin:0;
-    font-family: "Segoe UI", sans-serif;
-    display:flex;
-}
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* 側邊欄 */
-nav {
-    width:260px;
-    height:100vh;
-    overflow:auto;
-    background:#111;
-    color:white;
-    padding:20px;
-    position:fixed;
-}
+        body {
+            font-family: 'Outfit', 'Noto Sans TC', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-nav h2 {
-    font-size:18px;
-}
+        /* Sidebar */
+        .sidebar {
+            width: 320px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            overflow-y: auto;
+        }
 
-nav a {
-    display:block;
-    color:#ccc;
-    padding:6px;
-    text-decoration:none;
-}
+        .sidebar h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.4;
+        }
 
-nav a:hover {
-    color:white;
-}
+        .nav-item {
+            padding: 1rem 1.2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: var(--text-dim);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            border: 1px solid transparent;
+        }
 
-/* 主內容 */
-main {
-    margin-left:260px;
-    padding:30px;
-    max-width:1000px;
-}
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+        }
 
-/* 卡片 */
-.section {
-    margin-bottom:40px;
-    border-left:5px solid #0077ff;
-    padding-left:15px;
-}
+        .nav-item.active {
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.1);
+        }
 
-/* 可折疊 */
-details {
-    margin:10px 0;
-    background:#f5f5f5;
-    padding:10px;
-    border-radius:6px;
-}
+        /* Main */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 3rem;
+            background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent);
+            scroll-behavior: smooth;
+        }
 
-/* 標題 */
-h1 {color:#003366;}
-h2 {color:#0055aa;}
-h3 {color:#0077cc;}
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
 
-.highlight {
-    background:#e6f2ff;
-    padding:5px;
-    border-radius:4px;
-}
+        .content-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            padding: 3.5rem;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease-out;
+        }
 
-button {
-    padding:6px 10px;
-    margin:5px;
-    cursor:pointer;
-}
+        .content-card.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
 
-.dark {
-    background:#111;
-    color:white;
-}
+        /* Markdown Styles */
+        .md-viewer h1 {
+            font-size: 2.2rem;
+            margin-bottom: 2rem;
+            color: #818cf8;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 1rem;
+        }
 
-.dark .section {
-    border-color:#66ccff;
-}
-</style>
+        .md-viewer h2 {
+            font-size: 1.6rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            color: #a5b4fc;
+        }
+
+        .md-viewer p {
+            line-height: 1.8;
+            margin-bottom: 1.2rem;
+            font-size: 1.1rem;
+            color: #cbd5e1;
+        }
+
+        .md-viewer ul, .md-viewer ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #cbd5e1;
+        }
+
+        .md-viewer li { margin-bottom: 0.6rem; }
+
+        /* Gallery */
+        .image-gallery {
+            margin-top: 3rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .img-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1rem;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .img-item img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .img-item img:hover {
+            transform: scale(1.02);
+        }
+
+        .img-caption {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            font-style: italic;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        @media (max-width: 900px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; flex-direction: row; overflow-x: auto; padding: 1rem; }
+            .sidebar h1 { display: none; }
+            .main-content { padding: 1.5rem; }
+            .content-card { padding: 2rem; }
+        }
+    </style>
 </head>
-
 <body>
+    <div class="sidebar">
+        <h1>地震學 Ch.3<br>完整筆記導讀</h1>
+        <div id="nav-list"></div>
+    </div>
+    <div class="main-content">
+        <div class="container">
+            <div id="content-card" class="content-card">
+                <div id="md-viewer" class="md-viewer"></div>
+                <div id="image-gallery" class="image-gallery"></div>
+            </div>
+        </div>
+    </div>
 
-<nav>
-<h2>📘 章節導覽</h2>
-<a href="#s31">3.1 緒論</a>
-<a href="#s32">3.2 折射法</a>
-<a href="#s33">3.3 反射法</a>
-<a href="#s34">3.4 球形地球</a>
-<a href="#s35">3.5 走時研究</a>
-<a href="#s36">3.6 各向異性</a>
-<a href="#s37">3.7 衰減</a>
-<a href="#s38">3.8 組成</a>
+    <script>
+        const chapters = """ + json.dumps(chapters_data, ensure_ascii=False) + """;
+        const navList = document.getElementById('nav-list');
+        const mdViewer = document.getElementById('md-viewer');
+        const imgGallery = document.getElementById('image-gallery');
+        const contentCard = document.getElementById('content-card');
 
-<hr>
-<button onclick="toggleMode()">🌙 Dark Mode</button>
-</nav>
+        function loadChapter(id) {
+            const ch = chapters.find(c => c.id === id);
+            if (!ch) return;
 
-<main>
+            // Update UI
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.id === id);
+            });
 
-<h1>🌍 地震學第三章互動學習</h1>
+            // Transition
+            contentCard.classList.remove('active');
+            
+            setTimeout(() => {
+                // Render Markdown
+                mdViewer.innerHTML = marked.parse(ch.content);
 
-<div id="s31" class="section">
-<h2>3.1 緒論</h2>
+                // Render Images
+                imgGallery.innerHTML = '';
+                if (ch.images.length > 0) {
+                    ch.images.forEach(url => {
+                        const div = document.createElement('div');
+                        div.className = 'img-item';
+                        div.innerHTML = `
+                            <img src="${url}" alt="Figure" onclick="window.open('${url}', '_blank')">
+                            <div class="img-caption">圖表：${url.split('/').pop()}</div>
+                        `;
+                        imgGallery.appendChild(div);
+                    });
+                    imgGallery.style.display = 'flex';
+                } else {
+                    imgGallery.style.display = 'none';
+                }
 
-<details open>
-<summary>概述</summary>
-地震學透過地震波走時推導地球內部速度結構，進而約束礦物與熱狀態。
-</details>
+                contentCard.classList.add('active');
+                document.querySelector('.main-content').scrollTop = 0;
+            }, 300);
+        }
 
-<details>
-<summary>解析力</summary>
-地震學可精確描述CMB、地殼與地函界面，優於重力與磁力方法。
-</details>
+        // Initialize Nav
+        chapters.forEach(ch => {
+            const div = document.createElement('div');
+            div.className = 'nav-item';
+            div.dataset.id = ch.id;
+            div.innerHTML = `<span>●</span> ${ch.title}`;
+            div.onclick = () => loadChapter(ch.id);
+            navList.appendChild(div);
+        });
 
-<details>
-<summary>走時與反演</summary>
-走時 = 接收時間 - 發震時間  
-為慢度沿射線的積分，需多測站資料才能反演。
-</details>
-
-</div>
-
-<div id="s32" class="section">
-<h2>3.2 地震折射法</h2>
-
-<details>
-<summary>平面層法</summary>
-直達波：T = x/v₀  
-首波：T = x/v₁ + τ  
-存在交叉距離
-</details>
-
-<details>
-<summary>傾斜層</summary>
-需雙向測量  
-v_u ≠ v_d
-</details>
-
-<details>
-<summary>限制</summary>
-低速層 → 無首波 → 深度誤判
-</details>
-
-</div>
-
-<div id="s33" class="section">
-<h2>3.3 地震反射法</h2>
-
-<details>
-<summary>走時雙曲線</summary>
-T² = x²/v² + t₀²
-</details>
-
-<details>
-<summary>CMP</summary>
-共中點疊加提升訊號品質
-</details>
-
-<details>
-<summary>偏移</summary>
-修正傾斜造成的假象
-</details>
-
-</div>
-
-<div id="s34" class="section">
-<h2>3.4 球形地球</h2>
-
-<details>
-<summary>Snell定律</summary>
-p = r sin i / v
-</details>
-
-<details>
-<summary>三重化</summary>
-速度急變 → 多條射線
-</details>
-
-<details>
-<summary>陰影帶</summary>
-低速層 → 無波到達
-</details>
-
-</div>
-
-<div id="s35" class="section">
-<h2>3.5 實體波走時</h2>
-
-<details>
-<summary>地球模型</summary>
-地殼 → 地函 → 外核 → 內核
-</details>
-
-<details>
-<summary>震相</summary>
-P, S, PP, PKP, PKIKP
-</details>
-
-</div>
-
-<div id="s36" class="section">
-<h2>3.6 各向異性</h2>
-
-<details>
-<summary>來源</summary>
-SPO、LPO
-</details>
-
-<details>
-<summary>剪切波分裂</summary>
-一個波 → 兩個不同速度
-</details>
-
-</div>
-
-<div id="s37" class="section">
-<h2>3.7 衰減</h2>
-
-<details>
-<summary>原因</summary>
-幾何擴散、散射、非彈性
-</details>
-
-<details>
-<summary>Q值</summary>
-Q越大 → 衰減越小
-</details>
-
-</div>
-
-<div id="s38" class="section">
-<h2>3.8 地函與地核組成</h2>
-
-<details>
-<summary>密度</summary>
-平均5.5 g/cm³ → 存在高密度核心
-</details>
-
-<details>
-<summary>地函</summary>
-主要為橄欖岩（pyrolite）
-</details>
-
-<details>
-<summary>地核</summary>
-鐵 + 輕元素
-</details>
-
-</div>
-
-</main>
-
-<script>
-function toggleMode(){
-    document.body.classList.toggle("dark");
-}
-</script>
-
+        // Load First Chapter
+        if (chapters.length > 0) loadChapter(chapters[0].id);
+    </script>
 </body>
 </html>
+"""
+    with open("index.html", "w", encoding="utf-8") as f:
+        f.write(template)
+    print("index.html (完整互動版) 生成成功！")
+
+if __name__ == "__main__":
+    generate()
