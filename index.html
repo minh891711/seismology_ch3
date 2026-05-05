@@ -1,1 +1,287 @@
+import os
+import json
+
+# 定義章節資訊
+CHAPTERS = [
+    {"id": "3.1", "title": "3.1 緒論", "file": "summaries/15_3.1_Introduction_摘要.md", "images": []},
+    {"id": "3.2", "title": "3.2 折射法", "file": "summaries/16_3.2_Refraction_seismology_摘要.md", "images": ["3.2-1.png", "3.2-4.png", "3.2-17.png"]},
+    {"id": "3.3", "title": "3.3 反射法", "file": "summaries/17_3.3_Reflection_seismology_摘要.md", "images": []},
+    {"id": "3.4", "title": "3.4 球形地球", "file": "summaries/18_3.4_Seismic_waves_spherical_earth_摘要.md", "images": []},
+    {"id": "3.5", "title": "3.5 實體波走時", "file": "summaries/19_3.5_Body_wave_travel_time_studies_摘要.md", "images": []},
+    {"id": "3.6", "title": "3.6 各向異性", "file": "summaries/20_3.6_Anisotropic_earth_structure_摘要.md", "images": ["3.6-1.png", "3.6-7.png"]},
+    {"id": "3.7", "title": "3.7 衰減與非彈性", "file": "summaries/21_3.7_Attenuation_and_anelasticity_摘要.md", "images": ["3.7-1.png", "3.7-5.png", "3.7-10.png", "3.7-18.png"]},
+    {"id": "3.8", "title": "3.8 地函與地核", "file": "summaries/22_3.8_Composition_of_mantle_and_core_摘要.md", "images": []},
+]
+
+def generate():
+    data = []
+    for ch in CHAPTERS:
+        with open(ch["file"], "r", encoding="utf-8") as f:
+            content = f.read()
+        data.append({
+            "id": ch["id"],
+            "title": ch["title"],
+            "content": content,
+            "images": ch["images"]
+        })
+
+    # HTML 模板
+    template = """<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地震學第三章：地球內部結構與地震波 — 導覽</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.3);
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
+            --accent: #10b981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans TC', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Style */
+        .sidebar {
+            width: 300px;
+            background: rgba(15, 23, 42, 0.95);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 10;
+        }
+
+        .sidebar h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            padding-left: 0.5rem;
+        }
+
+        .nav-item {
+            padding: 0.8rem 1.2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: var(--text-dim);
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        /* Main Content Style */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 3rem;
+            background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent);
+            scroll-behavior: smooth;
+        }
+
+        .content-card {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            padding: 3rem;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease-out;
+        }
+
+        .content-card.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .markdown-body h1, .markdown-body h2 {
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #818cf8;
+        }
+
+        .markdown-body h1 { font-size: 2.2rem; border-bottom: 2px solid rgba(129, 140, 248, 0.3); padding-bottom: 0.5rem; }
+        .markdown-body h2 { font-size: 1.6rem; color: #a5b4fc; }
+        
+        .markdown-body p {
+            line-height: 1.8;
+            margin-bottom: 1.2rem;
+            font-size: 1.05rem;
+            color: #cbd5e1;
+        }
+
+        .markdown-body ul, .markdown-body ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1.2rem;
+            color: #cbd5e1;
+        }
+
+        .markdown-body li { margin-bottom: 0.5rem; }
+
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .img-container {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            padding: 1rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .img-container:hover {
+            transform: scale(1.02);
+        }
+
+        .img-container img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        .img-label {
+            margin-top: 0.8rem;
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        @media (max-width: 900px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; flex-direction: row; overflow-x: auto; padding: 1rem; }
+            .sidebar h1 { display: none; }
+            .main-content { padding: 1.5rem; }
+            .content-card { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h1>地震學 第三章導讀</h1>
+        <div id="nav-list"></div>
+    </div>
+    <div class="main-content">
+        <div id="content-area" class="content-card">
+            <div id="md-viewer" class="markdown-body"></div>
+            <div id="image-viewer" class="image-gallery"></div>
+        </div>
+    </div>
+
+    <script>
+        const chapterData = """ + json.dumps(data) + """;
+        const navList = document.getElementById('nav-list');
+        const mdViewer = document.getElementById('md-viewer');
+        const imageViewer = document.getElementById('image-viewer');
+        const contentCard = document.getElementById('content-area');
+
+        function showChapter(id) {
+            const ch = chapterData.find(c => c.id === id);
+            if (!ch) return;
+
+            // 更新導覽列樣式
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.id === id);
+            });
+
+            // 動畫效果：先隱藏再顯示
+            contentCard.classList.remove('active');
+            
+            setTimeout(() => {
+                // 渲染 Markdown
+                mdViewer.innerHTML = marked.parse(ch.content);
+                
+                // 渲染圖片
+                imageViewer.innerHTML = '';
+                if (ch.images && ch.images.length > 0) {
+                    ch.images.forEach(img => {
+                        const container = document.createElement('div');
+                        container.className = 'img-container';
+                        container.innerHTML = `
+                            <img src="${img}" alt="${img}" onerror="this.parentElement.style.display='none'">
+                            <div class="img-label">${img}</div>
+                        `;
+                        imageViewer.appendChild(container);
+                    });
+                    imageViewer.style.display = 'grid';
+                } else {
+                    imageViewer.style.display = 'none';
+                }
+                
+                contentCard.classList.add('active');
+                document.querySelector('.main-content').scrollTop = 0;
+            }, 300);
+        }
+
+        // 初始化導覽列
+        chapterData.forEach(ch => {
+            const div = document.createElement('div');
+            div.className = 'nav-item';
+            div.dataset.id = ch.id;
+            div.innerHTML = `<span>●</span> ${ch.title}`;
+            div.onclick = () => showChapter(ch.id);
+            navList.appendChild(div);
+        });
+
+        // 預設顯示第一章
+        showChapter(chapterData[0].id);
+    </script>
+</body>
+</html>
+"""
+    with open("index.html", "w", encoding="utf-8") as f:
+        f.write(template)
+    print("index.html 生成成功！")
+
+if __name__ == "__main__":
+    generate()
 
