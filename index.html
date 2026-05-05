@@ -1,244 +1,498 @@
-<!DOCTYPE html>
+import os
+import json
+
+# GitHub raw URL 前綴（正確的 raw 格式，非 blob）
+RAW_BASE = "https://raw.githubusercontent.com/minh891711/seismology_ch3/main/photos"
+
+# 圖片對應章節
+CHAPTERS = [
+    {"id": "3.1", "title": "3.1 緒論 Introduction", "file": "summaries/15_3.1_Introduction_摘要.md", "images": []},
+    {"id": "3.2", "title": "3.2 折射法 Refraction", "file": "summaries/16_3.2_Refraction_seismology_摘要.md",
+     "images": ["3.2-1.png", "3.2-4.png", "3.2-17.png"]},
+    {"id": "3.3", "title": "3.3 反射法 Reflection", "file": "summaries/17_3.3_Reflection_seismology_摘要.md", "images": []},
+    {"id": "3.4", "title": "3.4 球形地球 Spherical Earth", "file": "summaries/18_3.4_Seismic_waves_spherical_earth_摘要.md",
+     "images": ["3.4-5.png", "3.4-6.png", "3.4-7.png"]},
+    {"id": "3.5", "title": "3.5 實體波走時 Body Wave", "file": "summaries/19_3.5_Body_wave_travel_time_studies_摘要.md",
+     "images": ["3.5-1.png", "3.5-7.png"]},
+    {"id": "3.6", "title": "3.6 各向異性 Anisotropy", "file": "summaries/20_3.6_Anisotropic_earth_structure_摘要.md",
+     "images": ["3.6-1.png", "3.6-7.png"]},
+    {"id": "3.7", "title": "3.7 衰減與非彈性 Attenuation", "file": "summaries/21_3.7_Attenuation_and_anelasticity_摘要.md",
+     "images": ["3.7-1.png", "3.7-5.png", "3.7-10.png", "3.7-18.png"]},
+    {"id": "3.8", "title": "3.8 地函與地核 Mantle & Core", "file": "summaries/22_3.8_Composition_of_mantle_and_core_摘要.md", "images": []},
+]
+
+def build_data():
+    data = []
+    for ch in CHAPTERS:
+        with open(ch["file"], "r", encoding="utf-8") as f:
+            content = f.read()
+        # 轉換圖片路徑為完整 URL
+        images = [f"{RAW_BASE}/{img}" for img in ch["images"]]
+        data.append({
+            "id": ch["id"],
+            "title": ch["title"],
+            "content": content,
+            "images": images
+        })
+    return data
+
+def generate():
+    data = build_data()
+    data_json = json.dumps(data, ensure_ascii=False, indent=2)
+
+    html = f"""<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>地震學第三章：地球內部結構與地震波</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    
+    <title>地震學第三章 — 地球內部結構與地震波</title>
+    <meta name="description" content="地震學第三章互動式筆記，涵蓋折射法、反射法、球形地球模型、衰減、各向異性、地函與地核組成。">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            line-height: 1.8;
-            color: #333;
-            background-color: #f8f9fa;
-        }
+        :root {{
+            --primary: #818cf8;
+            --primary-dark: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.25);
+            --accent: #34d399;
+            --bg: #080f1e;
+            --bg2: #0d1829;
+            --sidebar-bg: rgba(10, 16, 32, 0.98);
+            --card-bg: rgba(17, 28, 54, 0.85);
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #e2e8f0;
+            --text-dim: #64748b;
+            --text-md: #94a3b8;
+        }}
 
-        /* Sidebar Navigation */
-        #sidebar {
-            position: fixed;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            z-index: 100;
-            padding: 48px 0 0;
-            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
-            background-color: #fff;
-        }
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
 
-        .nav-link {
-            font-weight: 500;
-            color: #333;
-            padding: 10px 20px;
-        }
+        html, body {{
+            height: 100%;
+            font-family: 'Outfit', 'Noto Sans TC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+        }}
 
-        .nav-link.active {
-            color: #0d6efd;
-            background-color: #e9ecef;
-        }
+        /* ===== LAYOUT ===== */
+        .app {{
+            display: flex;
+            height: 100vh;
+        }}
 
-        /* Content Area */
-        main {
+        /* ===== SIDEBAR ===== */
+        .sidebar {{
+            width: 290px;
+            flex-shrink: 0;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            z-index: 10;
+        }}
+
+        .sidebar-header {{
+            padding: 2rem 1.5rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }}
+
+        .sidebar-header .logo {{
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            color: var(--primary);
+            text-transform: uppercase;
+            margin-bottom: 0.6rem;
+        }}
+
+        .sidebar-header h1 {{
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.4;
+        }}
+
+        .nav-section-label {{
+            padding: 1rem 1.5rem 0.4rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }}
+
+        .nav-item {{
+            margin: 0.2rem 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-md);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            position: relative;
+        }}
+
+        .nav-item .nav-id {{
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary);
+            background: rgba(99, 102, 241, 0.12);
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }}
+
+        .nav-item .nav-title {{ flex: 1; font-size: 0.9rem; line-height: 1.3; }}
+
+        .nav-item:hover {{
+            background: rgba(255,255,255,0.04);
+            color: var(--text);
+        }}
+
+        .nav-item.active {{
+            background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.15));
+            color: white;
+            border: 1px solid rgba(129,140,248,0.25);
+        }}
+
+        .nav-item.active .nav-id {{
+            background: var(--primary-dark);
+            color: white;
+        }}
+
+        /* ===== MAIN ===== */
+        .main {{
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }}
+
+        .main-inner {{
+            flex: 1;
+            padding: 2.5rem 3rem;
+            max-width: 1050px;
+            width: 100%;
+            margin: 0 auto;
+        }}
+
+        /* ===== CONTENT CARD ===== */
+        .content-card {{
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            opacity: 0;
+            transform: translateY(16px);
+            transition: opacity 0.45s ease, transform 0.45s ease;
+        }}
+
+        .content-card.visible {{
+            opacity: 1;
+            transform: translateY(0);
+        }}
+
+        /* ===== MARKDOWN ===== */
+        .md-body h1 {{
+            font-size: 1.9rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a5b4fc, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }}
+
+        .md-body h2 {{
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #93c5fd;
+            margin: 2rem 0 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }}
+
+        .md-body h2::before {{
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 1.2em;
+            background: linear-gradient(to bottom, var(--primary), #a78bfa);
+            border-radius: 2px;
+            flex-shrink: 0;
+        }}
+
+        .md-body h3 {{
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #67e8f9;
+            margin: 1.5rem 0 0.6rem;
+        }}
+
+        .md-body p {{
+            font-size: 1.02rem;
+            line-height: 1.85;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+        }}
+
+        .md-body ul, .md-body ol {{
+            margin: 0.5rem 0 1rem 1.5rem;
+            color: #cbd5e1;
+        }}
+
+        .md-body li {{ margin-bottom: 0.5rem; line-height: 1.7; font-size: 1rem; }}
+
+        .md-body strong {{ color: #fde68a; font-weight: 600; }}
+        .md-body em {{ color: #a5f3fc; font-style: normal; font-weight: 500; }}
+
+        .md-body code {{
+            background: rgba(99,102,241,0.15);
+            border: 1px solid rgba(99,102,241,0.2);
+            padding: 0.15em 0.4em;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #c4b5fd;
+        }}
+
+        .md-body hr {{
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 2rem 0;
+        }}
+
+        /* ===== IMAGE GALLERY ===== */
+        .gallery-heading {{
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent);
+            margin-top: 3rem;
             padding-top: 2rem;
-        }
+            border-top: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }}
 
-        .section-card {
-            background: white;
-            padding: 2.5rem;
+        .gallery {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }}
+
+        .gallery-item {{
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            cursor: zoom-in;
+        }}
+
+        .gallery-item:hover {{
+            transform: translateY(-4px);
+            box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+        }}
+
+        .gallery-item img {{
+            width: 100%;
+            display: block;
+            border-radius: 13px 13px 0 0;
+        }}
+
+        .gallery-caption {{
+            padding: 0.6rem 1rem;
+            font-size: 0.82rem;
+            color: var(--text-dim);
+            text-align: center;
+        }}
+
+        /* ===== LIGHTBOX ===== */
+        #lightbox {{
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(6px);
+        }}
+
+        #lightbox.open {{ display: flex; }}
+
+        #lightbox img {{
+            max-width: 90%;
+            max-height: 90vh;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            margin-bottom: 2rem;
-        }
+            box-shadow: 0 30px 80px rgba(0,0,0,0.8);
+        }}
 
-        h1 { color: #2c3e50; border-bottom: 3px solid #0d6efd; padding-bottom: 10px; margin-top: 2rem; }
-        h2 { color: #34495e; margin-top: 1.5rem; border-left: 5px solid #0d6efd; padding-left: 15px; }
-        h3 { color: #4b6584; margin-top: 1.2rem; }
+        #lightbox .close-btn {{
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }}
 
-        .highlight-box {
-            background-color: #e7f1ff;
-            border-left: 5px solid #0d6efd;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 0 5px 5px 0;
-        }
+        #lightbox .close-btn:hover {{ background: rgba(255,255,255,0.2); }}
 
-        .formula-box {
-            background-color: #f1f2f6;
-            padding: 15px;
-            text-align: center;
-            border-radius: 8px;
-            margin: 15px 0;
-            font-family: 'Times New Roman', serif;
-        }
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {{ width: 6px; }}
+        ::-webkit-scrollbar-track {{ background: transparent; }}
+        ::-webkit-scrollbar-thumb {{ background: #1e2d47; border-radius: 3px; }}
 
-        footer {
-            padding: 2rem 0;
-            text-align: center;
-            color: #777;
-            font-size: 0.9rem;
-        }
-
-        @media (max-width: 768px) {
-            #sidebar { display: none; }
-        }
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {{
+            .app {{ flex-direction: column; height: auto; overflow: auto; }}
+            .sidebar {{ width: 100%; height: auto; overflow-y: visible; border-right: none; border-bottom: 1px solid var(--border); }}
+            html, body {{ overflow: auto; }}
+            .main {{ overflow: visible; }}
+            .main-inner {{ padding: 1.5rem; }}
+            .content-card {{ padding: 1.5rem; }}
+        }}
     </style>
 </head>
-<body data-bs-spy="scroll" data-bs-target="#sidebarMenu">
+<body>
+<div class="app">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">Seismology • Chapter 3</div>
+            <h1>地球內部結構<br>與地震波</h1>
+        </div>
+        <div class="nav-section-label">章節導覽</div>
+        <div id="nav-list"></div>
+    </div>
 
-<div class="container-fluid">
-    <div class="row">
-        <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar collapse bg-light shadow-sm">
-            <div class="position-sticky pt-3" id="sidebarMenu">
-                <h5 class="px-3 mt-4 mb-3 text-muted text-uppercase">目錄</h5>
-                <ul class="nav flex-column">
-                    <li class="nav-item"><a class="nav-link" href="#sec3-1">3.1 緒論</a></li>
-                    <li class="nav-item ms-3"><a class="nav-link" href="#sec3-1-1">優越解析力</a></li>
-                    <li class="nav-item ms-3"><a class="nav-link" href="#sec3-1-2">走時與反演</a></li>
-                    <li class="nav-item ms-3"><a class="nav-link" href="#sec3-1-3">正演與反演</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#sec3-2">3.2 地震折射法</a></li>
-                    <li class="nav-item ms-3"><a class="nav-link" href="#sec3-2-1">平面層法</a></li>
-                    <li class="nav-item ms-3"><a class="nav-link" href="#sec3-2-2">傾斜層法</a></li>
-                    <li class="nav-item ms-3"><a class="nav-link" href="#sec3-2-3">進階分析方法</a></li>
-                    <li class="nav-item ms-3"><a class="nav-link" href="#sec3-2-4">地殼結構</a></li>
-                    <li class="nav-item ms-3"><a class="nav-link" href="#sec3-2-5">岩石組成推論</a></li>
-                </ul>
+    <!-- Main -->
+    <div class="main">
+        <div class="main-inner">
+            <div id="content-area" class="content-card">
+                <div id="md-viewer" class="md-body"></div>
+                <div id="gallery-area"></div>
             </div>
-        </nav>
-
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            
-            <header class="py-5 text-center">
-                <h1 class="display-4">第三章：地球內部結構與地震波</h1>
-                <p class="lead">探測地球內部的核心技術與科學理論</p>
-            </header>
-
-            <section id="sec3-1" class="section-card">
-                <h1>3.1 緒論 (Introduction)</h1>
-                <h2>概述</h2>
-                <p>本節為地震學第三章「地球內部結構與地震波」的導論，闡明地震學在探測地球內部結構上所扮演的核心角色。地震學的一項主要應用，即是透過地震波的走時（travel time）資料，推導出地球內部地震波速度的分布情形，進而約束地球內部的礦物學、化學與熱力狀態。</p>
-
-                <h2 id="sec3-1-1">地震學的優越解析力</h2>
-                <div class="row">
-                    <div class="col-md-12">
-                        <p>相較於其他地球物理方法（如重力與磁力探測），地震學資料所提供的解析能力明顯更為優異。舉例而言，重力與磁力數據雖可推斷地球深部存在一個高密度的液態核，但僅能給出密度與大小的粗略約束。</p>
-                        <div class="highlight-box">
-                            <strong>核心案例：核幔邊界 (CMB)</strong><br>
-                            地震學觀測可以精確指出核幔邊界的深度以及該界面處物理性質的劇烈變化：固態地函同時傳遞 P 波與 S 波，但液態外核中 S 波無法傳遞，且 P 波速度急劇下降。
-                        </div>
-                    </div>
-                </div>
-
-                <h2 id="sec3-1-2">走時資料與反演問題</h2>
-                <p>研究地球內部結構的基礎數據是地震波的走時。其量測方式為：將接收器處的到達時間減去震源的發震時間。</p>
-                <div class="formula-box">
-                    走時 \( T = \int_{path} \frac{1}{v(s)} ds = \int_{path} u(s) ds \) <br>
-                    (其中 \( u \) 為慢度 slowness)
-                </div>
-                <p>走時資料同時包含了震源訊息與介質性質的資訊，如何有效分離兩者是許多地震學研究的關鍵挑戰。唯有利用多組不同震源與接收器之間的走時資料，方能有效約束地球內部的速度結構。</p>
-
-                <h2 id="sec3-1-3">正演問題與反演問題</h2>
-                <ul>
-                    <li><strong>正演問題 (Forward Problem)：</strong>若速度結構已知，計算走時相對直接。</li>
-                    <li><strong>反演問題 (Inverse Problem)：</strong>從地表觀測的走時和振幅反推深部速度結構，難度較高。</li>
-                </ul>
-                <p>除直接利用走時外，面波頻散（surface wave dispersion）和自由振盪的固有頻率（normal mode eigenfrequencies）也能提供速度結構的約束。</p>
-
-                <h2>章節架構</h2>
-                <p>本章依循從簡入繁的策略：</p>
-                <ol>
-                    <li>均勻、各向同性、彈性的平面層模型。</li>
-                    <li>球形地球幾何。</li>
-                    <li>地球的各向異性和非彈性行為。</li>
-                </ol>
-            </section>
-
-            <section id="sec3-2" class="section-card">
-                <h1>3.2 地震折射法 (Refraction Seismology)</h1>
-                <h2>概述</h2>
-                <p>本節介紹利用折射波走時來反演地球深部速度結構的方法——地震折射法。此技術可應用於從淺地表到地殼與上部地函的不同尺度研究。</p>
-
-                <h2 id="sec3-2-1">3.2.1 平面層法</h2>
-                <p>考慮厚度 \( h_0 \)、速度 \( v_0 \) 的水平層覆蓋在速度 \( v_1 \) ( \( v_1 > v_0 \) ) 的半空間上：</p>
-                <table class="table table-bordered mt-3">
-                    <thead class="table-light">
-                        <tr>
-                            <th>波種</th>
-                            <th>走時公式</th>
-                            <th>特性描述</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>直達波 (Direct)</td>
-                            <td>\( T_D(x) = \frac{x}{v_0} \)</td>
-                            <td>通過原點的直線，斜率為 \( 1/v_0 \)。</td>
-                        </tr>
-                        <tr>
-                            <td>反射波 (Reflected)</td>
-                            <td>\( T_R(x) = \frac{\sqrt{x^2 + (2h_0)^2}}{v_0} \)</td>
-                            <td>走時曲線為雙曲線形式。</td>
-                        </tr>
-                        <tr>
-                            <td>首波 (Head Wave)</td>
-                            <td>\( T_H(x) = \frac{x}{v_1} + \tau_1 \)</td>
-                            <td>在臨界角入射後傳播，斜率為 \( 1/v_1 \)。</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="highlight-box">
-                    <strong>交叉距離 (Crossover Distance \( x_d \)):</strong><br>
-                    在 \( x_d \) 以內，直達波先到；超過此距離後，首波成為初至。注意「盲區」問題：若層太薄或速度差異太小，首波可能永遠不會成為初至。
-                </div>
-
-                <h2 id="sec3-2-2">3.2.2 傾斜層法</h2>
-                <p>當界面具有傾角 \( \theta \) 時，需進行<strong>反向剖面量測 (Reversed Profile)</strong>：</p>
-                <ul>
-                    <li><strong>上傾視速度 (Up-dip):</strong> \( v_u = \frac{v_0}{\sin(i_c - \theta)} \)</li>
-                    <li><strong>下傾視速度 (Down-dip):</strong> \( v_d = \frac{v_0}{\sin(i_c + \theta)} \)</li>
-                </ul>
-                <p>互易原理 (Reciprocity) 保證交換震源與接收器後總走時不變。</p>
-
-                <h2 id="sec3-2-3">3.2.3 進階分析方法</h2>
-                <p>實際地質構造複雜，常使用以下工具：</p>
-                <ul>
-                    <li><strong>射線追蹤 (Ray Tracing):</strong> 用電腦模擬複雜結構的走時。</li>
-                    <li><strong>振幅分析:</strong> 區分速度梯度與銳利界面。
-                        <ul>
-                            <li>銳利界面：PmP 反射波振幅大。</li>
-                            <li>漸變帶：Pn 振幅較大，反射波較弱。</li>
-                        </ul>
-                    </li>
-                    <li><strong>合成地震圖:</strong> 同時預測走時與振幅。</li>
-                </ul>
-
-                <h2 id="sec3-2-4">3.2.4 地殼結構</h2>
-                <p>折射法的全球觀測結果：</p>
-                <ul>
-                    <li><strong>大洋地殼:</strong> 厚約 7 km，結構相對均勻。</li>
-                    <li><strong>大陸地殼:</strong> 較厚且變化大 (如內華達山脈可達 35-40 km)。</li>
-                    <li><strong>北美區域特徵:</strong> 東部地殼厚、Pn 速度高；西部地殼薄、Pn 速度低。</li>
-                </ul>
-
-                <h2 id="sec3-2-5">3.2.5 岩石組成推論</h2>
-                <p>結合實驗室數據推論出的組成：</p>
-                <ul>
-                    <li><strong>上部大陸地殼:</strong> 花崗閃長岩 (Granodiorite)。</li>
-                    <li><strong>大洋地殼:</strong> 輝長岩 (Gabbro)。</li>
-                    <li><strong>上部地函:</strong> 橄欖岩 (Peridotite)，以橄欖石為主，具各向異性。</li>
-                </ul>
-                <p>莫荷面 (Moho) 普遍被認為是化學界面（地殼與地函的交界），但也有學者認為是相變邊界。</p>
-            </section>
-
-            <footer>
-                <p>&copy; 2026 地震學課程筆記 - 專業地學知識庫</p>
-            </footer>
-        </main>
+        </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Lightbox -->
+<div id="lightbox">
+    <button class="close-btn" onclick="closeLightbox()">✕</button>
+    <img id="lightbox-img" src="" alt="">
+</div>
+
+<script>
+const chapterData = {data_json};
+
+const navList = document.getElementById('nav-list');
+const mdViewer = document.getElementById('md-viewer');
+const galleryArea = document.getElementById('gallery-area');
+const contentCard = document.getElementById('content-area');
+
+function showChapter(id) {{
+    const ch = chapterData.find(c => c.id === id);
+    if (!ch) return;
+
+    document.querySelectorAll('.nav-item').forEach(el => {{
+        el.classList.toggle('active', el.dataset.id === id);
+    }});
+
+    contentCard.classList.remove('visible');
+
+    setTimeout(() => {{
+        // Render markdown
+        mdViewer.innerHTML = marked.parse(ch.content);
+
+        // Render gallery
+        galleryArea.innerHTML = '';
+        if (ch.images && ch.images.length > 0) {{
+            const heading = document.createElement('div');
+            heading.className = 'gallery-heading';
+            heading.innerHTML = '📸 關鍵圖表';
+            galleryArea.appendChild(heading);
+
+            const grid = document.createElement('div');
+            grid.className = 'gallery';
+
+            ch.images.forEach(url => {{
+                const name = url.split('/').pop();
+                const item = document.createElement('div');
+                item.className = 'gallery-item';
+                item.innerHTML = `
+                    <img src="${{url}}" alt="${{name}}" onerror="this.parentElement.remove()">
+                    <div class="gallery-caption">圖 ${{name}}</div>
+                `;
+                item.querySelector('img').addEventListener('click', () => openLightbox(url));
+                grid.appendChild(item);
+            }});
+
+            galleryArea.appendChild(grid);
+        }}
+
+        contentCard.classList.add('visible');
+        document.querySelector('.main').scrollTop = 0;
+    }}, 250);
+}}
+
+// Build nav
+chapterData.forEach(ch => {{
+    const [secId, ...rest] = ch.title.split(' ');
+    const div = document.createElement('div');
+    div.className = 'nav-item';
+    div.dataset.id = ch.id;
+    div.innerHTML = `
+        <span class="nav-id">${{ch.id}}</span>
+        <span class="nav-title">${{rest.join(' ')}}</span>
+    `;
+    div.onclick = () => showChapter(ch.id);
+    navList.appendChild(div);
+}});
+
+// Lightbox
+function openLightbox(url) {{
+    document.getElementById('lightbox-img').src = url;
+    document.getElementById('lightbox').classList.add('open');
+}}
+
+function closeLightbox() {{
+    document.getElementById('lightbox').classList.remove('open');
+}}
+
+document.getElementById('lightbox').addEventListener('click', e => {{
+    if (e.target === e.currentTarget) closeLightbox();
+}});
+
+// Start
+if (chapterData.length > 0) showChapter(chapterData[0].id);
+</script>
 </body>
 </html>
+"""
+    with open("index.html", "w", encoding="utf-8") as f:
+        f.write(html)
+    print("index.html 生成完成！")
+
+if __name__ == "__main__":
+    generate()
